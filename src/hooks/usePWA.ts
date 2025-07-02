@@ -10,6 +10,15 @@ interface PWAState {
   serviceWorkerStatus: 'active' | 'inactive' | 'checking' | 'unavailable';
 }
 
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
 export function usePWA() {
   const [pwaState, setPwaState] = useState<PWAState>({
     isOnline: true,
@@ -19,7 +28,7 @@ export function usePWA() {
     serviceWorkerStatus: 'checking',
   });
 
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     // Check online status
@@ -28,6 +37,7 @@ export function usePWA() {
 
     // Check if app is installed
     const checkInstallation = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
                          (window.navigator as any).standalone === true;
       setPwaState(prev => ({ ...prev, isInstalled }));
@@ -36,7 +46,7 @@ export function usePWA() {
     // Handle install prompt
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setPwaState(prev => ({ ...prev, canInstall: true }));
     };
 
@@ -57,7 +67,7 @@ export function usePWA() {
           const registration = await navigator.serviceWorker.getRegistration();
           const status = registration?.active ? 'active' : 'inactive';
           setPwaState(prev => ({ ...prev, serviceWorkerStatus: status }));
-        } catch (error) {
+        } catch {
           setPwaState(prev => ({ ...prev, serviceWorkerStatus: 'inactive' }));
         }
       } else {

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useToast } from './ToastProvider';
 import LoadingSpinner from './LoadingSpinner';
+import OptimizedImage from './OptimizedImage';
 
 interface ImageUploadProps {
   onImageUploaded: (url: string) => void;
@@ -222,10 +223,14 @@ export default function ImageUpload({ onImageUploaded, className = '' }: ImageUp
               {uploadedImages.map((image) => (
                 <div key={image.filename} className="relative group">
                   <div className="aspect-square bg-white rounded-lg border overflow-hidden">
-                    <img
+                    <OptimizedImage
                       src={image.url}
                       alt={image.filename}
+                      width={300}
+                      height={300}
                       className="w-full h-full object-cover"
+                      placeholder="blur"
+                      blurDataURL="/vercel.svg" // fallback blur
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 space-y-2">

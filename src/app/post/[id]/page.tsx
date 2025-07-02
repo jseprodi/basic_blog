@@ -97,6 +97,8 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
                 className="w-full h-full object-cover"
                 priority={true}
                 sizes="(max-width: 768px) 100vw, 800px"
+                placeholder="blur"
+                blurDataURL="/vercel.svg"
               />
             </div>
           )}

@@ -118,7 +118,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
           onClick={() => {
             const url = prompt('Enter image URL:');
             if (url) {
-              const img = `<img src="${url}" alt="Image" style="max-width: 100%; height: auto;" />`;
+              const img = `<img src="${url}" alt="Image" loading="lazy" style="max-width:100%;height:auto;display:block;margin:auto;" />`;
               document.execCommand('insertHTML', false, img);
             }
           }}

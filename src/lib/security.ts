@@ -236,6 +236,7 @@ export function generateRequestFingerprint(request: Request): string {
 }
 
 // Logging for security events
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function logSecurityEvent(event: string, details: any): void {
   const logEntry = {
     timestamp: new Date().toISOString(),

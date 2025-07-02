@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SearchBar from '@/components/SearchBar';
 import { PostCardSkeleton } from '@/components/LoadingSpinner';
+import OptimizedImage from '@/components/OptimizedImage';
 
 interface Post {
   id: number;
@@ -130,10 +131,14 @@ export default function Home() {
                 <article key={post.id} className="bg-white shadow rounded-lg overflow-hidden">
                   {post.featuredImage && (
                     <div className="w-full h-48 bg-gray-200">
-                      <img
+                      <OptimizedImage
                         src={post.featuredImage}
                         alt={post.title}
+                        width={800}
+                        height={400}
                         className="w-full h-full object-cover"
+                        placeholder="blur"
+                        blurDataURL="/vercel.svg"
                       />
                     </div>
                   )}

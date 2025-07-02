@@ -12,6 +12,7 @@ import { useToast } from '@/components/ToastProvider';
 import { validateForm, validationRules } from '@/components/FormValidation';
 import { useKeyboardShortcuts } from '@/components/KeyboardShortcuts';
 import ImageUpload from '@/components/ImageUpload';
+import OptimizedImage from '@/components/OptimizedImage';
 
 interface Post {
   id: number;
@@ -296,13 +297,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     <div className="mt-3">
                       <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
                       <div className="relative max-w-xs">
-                        <img
+                        <OptimizedImage
                           src={featuredImage}
                           alt="Featured image preview"
+                          width={400}
+                          height={128}
                           className="w-full h-32 object-cover rounded-lg border"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
+                          placeholder="blur"
+                          blurDataURL="/vercel.svg"
                         />
                         <button
                           type="button"

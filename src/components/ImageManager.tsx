@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './ToastProvider';
 import LoadingSpinner from './LoadingSpinner';
 import ImageUpload from './ImageUpload';
+import OptimizedImage from './OptimizedImage';
 
 interface UploadedImage {
   filename: string;
@@ -113,10 +114,14 @@ export default function ImageManager() {
               {images.map((image) => (
                 <div key={image.filename} className="group relative">
                   <div className="aspect-square bg-gray-100 rounded-lg border overflow-hidden">
-                    <img
+                    <OptimizedImage
                       src={image.url}
                       alt={image.filename}
+                      width={300}
+                      height={300}
                       className="w-full h-full object-cover"
+                      placeholder="blur"
+                      blurDataURL="/vercel.svg"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 space-y-2">
@@ -199,10 +204,14 @@ export default function ImageManager() {
               </button>
             </div>
             <div className="p-4">
-              <img
+              <OptimizedImage
                 src={selectedImage}
                 alt="Preview"
+                width={800}
+                height={600}
                 className="max-w-full h-auto rounded-lg"
+                placeholder="blur"
+                blurDataURL="/vercel.svg"
               />
             </div>
             <div className="p-4 border-t">

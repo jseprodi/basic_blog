@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import DOMPurify from 'isomorphic-dompurify';
 import { 
   validateEmail, 
@@ -14,8 +14,8 @@ import {
 } from './security';
 
 // API response wrapper
-export function createApiResponse(
-  data: any = null,
+export function createApiResponse<T = unknown>(
+  data: T = null as unknown as T,
   status: number = 200,
   message: string = 'Success'
 ) {
@@ -31,10 +31,10 @@ export function createApiResponse(
 }
 
 // Error response wrapper
-export function createErrorResponse(
+export function createErrorResponse<T = unknown>(
   message: string,
   status: number = 400,
-  details?: any
+  details?: T
 ) {
   return NextResponse.json(
     {
@@ -65,9 +65,19 @@ export async function requireAuth(request: NextRequest) {
 }
 
 // Input validation middleware
+interface ValidationRule {
+  required?: boolean;
+  type?: string;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: RegExp;
+  validate?: (value: unknown) => { isValid: boolean; error?: string };
+  sanitize?: boolean;
+}
+
 export async function validateInput(
   request: NextRequest,
-  schema: Record<string, any>
+  schema: Record<string, ValidationRule>
 ) {
   try {
     const body = await request.json();
@@ -137,7 +147,7 @@ export async function validateInput(
     }
     
     return { body, errors: [] };
-  } catch (error) {
+  } catch {
     return createErrorResponse('Invalid request body', 400);
   }
 }
@@ -165,7 +175,7 @@ export async function validateFileUpload(request: NextRequest) {
     }
     
     return { file, formData };
-  } catch (error) {
+  } catch {
     return createErrorResponse('File upload failed', 400);
   }
 }
@@ -177,7 +187,8 @@ export function checkApiRateLimit(
   maxRequests: number = 100
 ): boolean {
   const key = `${identifier}:${action}:${Math.floor(Date.now() / 60000)}`;
-  const store = (global as any).rateLimitStore || new Map();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const store = (globalThis as any).rateLimitStore || new Map();
   
   const record = store.get(key);
   const now = Date.now();
