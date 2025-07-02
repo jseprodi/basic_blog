@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { CommentSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
+import { validateForm, validationRules } from '@/components/FormValidation';
 
 interface Comment {
   id: number;
@@ -29,6 +30,7 @@ export default function Comments({ postId }: CommentsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -60,6 +62,31 @@ export default function Comments({ postId }: CommentsProps) {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
+    setErrors({});
+
+    // Validate form
+    const formData = { 
+      content: newComment, 
+      authorName, 
+      authorEmail 
+    };
+    const validation = validateForm(formData, {
+      content: validationRules.commentContent,
+      authorName: validationRules.authorName,
+      authorEmail: validationRules.email
+    });
+
+    if (!validation.isValid) {
+      const fieldErrors: Record<string, string[]> = {};
+      validation.errors.forEach(error => {
+        const [field, message] = error.split(': ');
+        if (!fieldErrors[field]) fieldErrors[field] = [];
+        fieldErrors[field].push(message);
+      });
+      setErrors(fieldErrors);
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch(`/api/posts/${postId}/comments`, {
@@ -130,8 +157,17 @@ export default function Comments({ postId }: CommentsProps) {
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      errors.authorName ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   />
+                  {errors.authorName && (
+                    <div className="text-red-600 text-sm mt-1">
+                      {errors.authorName.map((error, index) => (
+                        <div key={index}>• {error}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="authorEmail" className="block text-sm font-medium text-gray-700 mb-1">
@@ -143,8 +179,17 @@ export default function Comments({ postId }: CommentsProps) {
                     value={authorEmail}
                     onChange={(e) => setAuthorEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      errors.authorEmail ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   />
+                  {errors.authorEmail && (
+                    <div className="text-red-600 text-sm mt-1">
+                      {errors.authorEmail.map((error, index) => (
+                        <div key={index}>• {error}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </>
@@ -160,9 +205,18 @@ export default function Comments({ postId }: CommentsProps) {
               onChange={(e) => setNewComment(e.target.value)}
               required
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                errors.content ? 'border-red-500' : 'border-gray-300'
+              }`}
               placeholder="Share your thoughts..."
             />
+            {errors.content && (
+              <div className="text-red-600 text-sm mt-1">
+                {errors.content.map((error, index) => (
+                  <div key={index}>• {error}</div>
+                ))}
+              </div>
+            )}
           </div>
 
           {error && (

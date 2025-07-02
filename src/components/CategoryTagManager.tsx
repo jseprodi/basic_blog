@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ToastProvider';
+import { validateForm, validationRules } from '@/components/FormValidation';
 
 interface Category {
   id: number;
@@ -32,6 +33,8 @@ export default function CategoryTagManager({
   const [tags, setTags] = useState<Tag[]>([]);
   const [newCategory, setNewCategory] = useState('');
   const [newTag, setNewTag] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [tagError, setTagError] = useState('');
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -66,6 +69,18 @@ export default function CategoryTagManager({
   const createCategory = async () => {
     if (!newCategory.trim()) return;
 
+    // Validate category name
+    const validation = validateForm({ name: newCategory.trim() }, {
+      name: validationRules.categoryName
+    });
+
+    if (!validation.isValid) {
+      setCategoryError(validation.errors[0]?.split(': ')[1] || 'Invalid category name');
+      return;
+    }
+
+    setCategoryError('');
+
     try {
       const response = await fetch('/api/categories', {
         method: 'POST',
@@ -90,6 +105,18 @@ export default function CategoryTagManager({
 
   const createTag = async () => {
     if (!newTag.trim()) return;
+
+    // Validate tag name
+    const validation = validateForm({ name: newTag.trim() }, {
+      name: validationRules.tagName
+    });
+
+    if (!validation.isValid) {
+      setTagError(validation.errors[0]?.split(': ')[1] || 'Invalid tag name');
+      return;
+    }
+
+    setTagError('');
 
     try {
       const response = await fetch('/api/tags', {
@@ -147,7 +174,9 @@ export default function CategoryTagManager({
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
             placeholder="New category name"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+            className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
+              categoryError ? 'border-red-500' : 'border-gray-300'
+            }`}
           />
           <button
             type="button"
@@ -157,6 +186,9 @@ export default function CategoryTagManager({
             Add
           </button>
         </div>
+        {categoryError && (
+          <div className="text-red-600 text-sm mt-1">{categoryError}</div>
+        )}
       </div>
 
       {/* Tags */}
@@ -188,7 +220,9 @@ export default function CategoryTagManager({
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             placeholder="New tag name"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+            className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
+              tagError ? 'border-red-500' : 'border-gray-300'
+            }`}
           />
           <button
             type="button"
@@ -198,6 +232,9 @@ export default function CategoryTagManager({
             Add
           </button>
         </div>
+        {tagError && (
+          <div className="text-red-600 text-sm mt-1">{tagError}</div>
+        )}
       </div>
     </div>
   );

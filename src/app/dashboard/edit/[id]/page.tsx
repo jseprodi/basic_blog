@@ -9,6 +9,7 @@ import RichTextEditor from '@/components/RichTextEditor';
 import CategoryTagManager from '@/components/CategoryTagManager';
 import LoadingSpinner, { FormSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
+import { validateForm, validationRules } from '@/components/FormValidation';
 
 interface Post {
   id: number;
@@ -36,6 +37,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -77,6 +79,28 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
+    setErrors({});
+
+    // Validate form
+    const formData = { title, content, excerpt, featuredImage };
+    const validation = validateForm(formData, {
+      title: validationRules.title,
+      content: validationRules.content,
+      excerpt: validationRules.excerpt,
+      featuredImage: featuredImage ? validationRules.url : {}
+    });
+
+    if (!validation.isValid) {
+      const fieldErrors: Record<string, string[]> = {};
+      validation.errors.forEach(error => {
+        const [field, message] = error.split(': ');
+        if (!fieldErrors[field]) fieldErrors[field] = [];
+        fieldErrors[field].push(message);
+      });
+      setErrors(fieldErrors);
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch(`/api/posts/${resolvedParams.id}`, {
@@ -171,9 +195,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
+                    errors.title ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {errors.title && (
+                  <div className="text-red-600 text-sm mt-1">
+                    {errors.title.map((error, index) => (
+                      <div key={index}>• {error}</div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -185,9 +218,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   value={excerpt}
                   onChange={(e) => setExcerpt(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
+                    errors.excerpt ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="A brief summary of your post..."
                 />
+                {errors.excerpt && (
+                  <div className="text-red-600 text-sm mt-1">
+                    {errors.excerpt.map((error, index) => (
+                      <div key={index}>• {error}</div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -199,9 +241,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   id="featuredImage"
                   value={featuredImage}
                   onChange={(e) => setFeaturedImage(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
+                    errors.featuredImage ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="https://example.com/image.jpg"
                 />
+                {errors.featuredImage && (
+                  <div className="text-red-600 text-sm mt-1">
+                    {errors.featuredImage.map((error, index) => (
+                      <div key={index}>• {error}</div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <CategoryTagManager
