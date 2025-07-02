@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import LoadingSpinner, { DashboardPostSkeleton } from '@/components/LoadingSpinner';
 
 interface Post {
   id: number;
@@ -93,7 +94,7 @@ export default function DashboardPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -120,7 +121,12 @@ export default function DashboardPage() {
             </div>
 
             {loading ? (
-              <div className="text-center py-8">Loading posts...</div>
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Posts</h2>
+                {[1, 2, 3].map((i) => (
+                  <DashboardPostSkeleton key={i} />
+                ))}
+              </div>
             ) : (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Posts</h2>

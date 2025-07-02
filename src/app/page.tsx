@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SearchBar from '@/components/SearchBar';
+import { PostCardSkeleton } from '@/components/LoadingSpinner';
 
 interface Post {
   id: number;
@@ -114,7 +115,11 @@ export default function Home() {
           </div>
           
           {loading ? (
-            <div className="text-center py-8">Loading posts...</div>
+            <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <PostCardSkeleton key={i} />
+              ))}
+            </div>
           ) : posts.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               {searchQuery ? `No posts found for "${searchQuery}"` : 'No published posts yet.'}

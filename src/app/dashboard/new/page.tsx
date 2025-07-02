@@ -6,9 +6,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import RichTextEditor from '@/components/RichTextEditor';
 import CategoryTagManager from '@/components/CategoryTagManager';
+import LoadingSpinner, { FormSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
 import { validateForm, validationRules } from '@/components/FormValidation';
-import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function NewPostPage() {
   const { data: session, status } = useSession();
@@ -89,8 +89,12 @@ export default function NewPostPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            <FormSkeleton />
+          </div>
+        </div>
       </div>
     );
   }
@@ -199,7 +203,7 @@ export default function NewPostPage() {
                   disabled={isSubmitting}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
-                  {isSubmitting && <LoadingSpinner size="sm" color="white" />}
+                  {isSubmitting && <LoadingSpinner size="sm" />}
                   <span>{isSubmitting ? 'Creating...' : 'Create Post'}</span>
                 </button>
             </form>

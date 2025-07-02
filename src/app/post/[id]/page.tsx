@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Comments from '@/components/Comments';
 import React from 'react';
+import LoadingSpinner, { PostSkeleton } from '@/components/LoadingSpinner';
 
 interface Post {
   id: number;
@@ -53,8 +54,10 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <PostSkeleton />
+        </div>
       </div>
     );
   }

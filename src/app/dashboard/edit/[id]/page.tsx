@@ -7,6 +7,7 @@ import Link from 'next/link';
 import React from 'react';
 import RichTextEditor from '@/components/RichTextEditor';
 import CategoryTagManager from '@/components/CategoryTagManager';
+import LoadingSpinner, { FormSkeleton } from '@/components/LoadingSpinner';
 
 interface Post {
   id: number;
@@ -107,8 +108,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   if (status === 'loading' || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            <FormSkeleton />
+          </div>
+        </div>
       </div>
     );
   }

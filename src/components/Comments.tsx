@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { CommentSkeleton } from '@/components/LoadingSpinner';
 
 interface Comment {
   id: number;
@@ -88,7 +89,16 @@ export default function Comments({ postId }: CommentsProps) {
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading comments...</div>;
+    return (
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold text-gray-900 mb-4">Comments</h3>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <CommentSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
