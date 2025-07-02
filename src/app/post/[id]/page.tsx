@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Comments from '@/components/Comments';
+import React from 'react';
 
 interface Post {
   id: number;
@@ -24,18 +25,19 @@ interface Post {
   }[];
 }
 
-export default function PostPage({ params }: { params: { id: string } }) {
+export default function PostPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params);
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetchPost();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const fetchPost = async () => {
     try {
-      const response = await fetch(`/api/public/posts/${params.id}`);
+      const response = await fetch(`/api/public/posts/${resolvedParams.id}`);
       if (response.ok) {
         const data = await response.json();
         setPost(data);
