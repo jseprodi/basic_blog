@@ -3,6 +3,7 @@
 import { signIn, getSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ToastProvider';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +26,17 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        const errorMessage = 'Invalid email or password';
+        setError(errorMessage);
+        showError(errorMessage);
       } else {
+        showSuccess('Successfully signed in!');
         router.push('/dashboard');
       }
     } catch (error) {
-      setError('An error occurred. Please try again.');
+      const errorMessage = 'An error occurred. Please try again.';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setIsLoading(false);
     }

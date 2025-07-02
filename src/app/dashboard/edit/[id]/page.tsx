@@ -8,6 +8,7 @@ import React from 'react';
 import RichTextEditor from '@/components/RichTextEditor';
 import CategoryTagManager from '@/components/CategoryTagManager';
 import LoadingSpinner, { FormSkeleton } from '@/components/LoadingSpinner';
+import { useToast } from '@/components/ToastProvider';
 
 interface Post {
   id: number;
@@ -35,6 +36,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -94,13 +96,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       });
 
       if (response.ok) {
+        showSuccess('Post updated successfully!');
         router.push('/dashboard');
       } else {
         const data = await response.json();
-        setError(data.error || 'Failed to update post');
+        const errorMessage = data.error || 'Failed to update post';
+        setError(errorMessage);
+        showError(errorMessage);
       }
     } catch (error) {
-      setError('An error occurred. Please try again.');
+      const errorMessage = 'An error occurred. Please try again.';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

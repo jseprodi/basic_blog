@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import LoadingSpinner, { DashboardPostSkeleton } from '@/components/LoadingSpinner';
+import { useToast } from '@/components/ToastProvider';
 
 interface Post {
   id: number;
@@ -30,6 +31,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -66,9 +68,14 @@ export default function DashboardPage() {
       });
       if (response.ok) {
         setPosts(posts.filter(post => post.id !== id));
+        showSuccess('Post deleted successfully!');
+      } else {
+        const data = await response.json();
+        showError(data.error || 'Failed to delete post');
       }
     } catch (error) {
       console.error('Error deleting post:', error);
+      showError('An error occurred while deleting the post');
     }
   };
 
@@ -85,9 +92,14 @@ export default function DashboardPage() {
         setPosts(posts.map(post => 
           post.id === id ? { ...post, published: !published } : post
         ));
+        showSuccess(published ? 'Post unpublished successfully!' : 'Post published successfully!');
+      } else {
+        const data = await response.json();
+        showError(data.error || 'Failed to update post status');
       }
     } catch (error) {
       console.error('Error updating post:', error);
+      showError('An error occurred while updating the post');
     }
   };
 

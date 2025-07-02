@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/components/ToastProvider';
 
 interface Category {
   id: number;
@@ -31,6 +32,7 @@ export default function CategoryTagManager({
   const [tags, setTags] = useState<Tag[]>([]);
   const [newCategory, setNewCategory] = useState('');
   const [newTag, setNewTag] = useState('');
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     fetchCategories();
@@ -75,9 +77,14 @@ export default function CategoryTagManager({
         const category = await response.json();
         setCategories([...categories, category]);
         setNewCategory('');
+        showSuccess('Category created successfully!');
+      } else {
+        const data = await response.json();
+        showError(data.error || 'Failed to create category');
       }
     } catch (error) {
       console.error('Error creating category:', error);
+      showError('An error occurred while creating the category');
     }
   };
 
@@ -95,9 +102,14 @@ export default function CategoryTagManager({
         const tag = await response.json();
         setTags([...tags, tag]);
         setNewTag('');
+        showSuccess('Tag created successfully!');
+      } else {
+        const data = await response.json();
+        showError(data.error || 'Failed to create tag');
       }
     } catch (error) {
       console.error('Error creating tag:', error);
+      showError('An error occurred while creating the tag');
     }
   };
 

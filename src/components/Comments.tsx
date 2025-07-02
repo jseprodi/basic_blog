@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { CommentSkeleton } from '@/components/LoadingSpinner';
+import { useToast } from '@/components/ToastProvider';
 
 interface Comment {
   id: number;
@@ -28,6 +29,7 @@ export default function Comments({ postId }: CommentsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     fetchComments();
@@ -77,12 +79,17 @@ export default function Comments({ postId }: CommentsProps) {
         setComments([comment, ...comments]);
         setNewComment('');
         setError('');
+        showSuccess('Comment posted successfully!');
       } else {
         const data = await response.json();
-        setError(data.error || 'Failed to post comment');
+        const errorMessage = data.error || 'Failed to post comment';
+        setError(errorMessage);
+        showError(errorMessage);
       }
     } catch (error) {
-      setError('An error occurred. Please try again.');
+      const errorMessage = 'An error occurred. Please try again.';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
