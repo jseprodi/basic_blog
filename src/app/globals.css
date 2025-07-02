@@ -25,6 +25,12 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Dark mode support */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
 /* Rich Text Editor Styles */
 [contenteditable="true"] {
   color: #111827 !important;
@@ -32,10 +38,18 @@ body {
   line-height: 1.6;
 }
 
+.dark [contenteditable="true"] {
+  color: #f9fafb !important;
+}
+
 [contenteditable="true"]:empty:before {
   content: attr(data-placeholder);
   color: #9ca3af;
   pointer-events: none;
+}
+
+.dark [contenteditable="true"]:empty:before {
+  color: #6b7280;
 }
 
 [contenteditable="true"]:focus {
@@ -59,4 +73,17 @@ body {
 
 [contenteditable="true"] a:hover {
   color: #1d4ed8;
+}
+
+.dark [contenteditable="true"] a {
+  color: #60a5fa;
+}
+
+.dark [contenteditable="true"] a:hover {
+  color: #93c5fd;
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }

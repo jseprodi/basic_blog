@@ -4,6 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ThemeToggle } from './ThemeProvider';
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -45,7 +46,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Navigation */}
@@ -54,20 +55,20 @@ export default function Header() {
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">B</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">Blog</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">Blog</span>
             </Link>
             
             <nav className="hidden md:flex space-x-6">
               <Link 
                 href="/" 
-                className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Home
               </Link>
               {session && (
                 <Link 
                   href="/dashboard" 
-                  className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Dashboard
                 </Link>
@@ -77,10 +78,13 @@ export default function Header() {
 
           {/* Search and User Menu */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Keyboard Shortcuts Help */}
             <button
               onClick={showKeyboardShortcuts}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 transition-colors"
               aria-label="Keyboard Shortcuts"
               title="Keyboard Shortcuts (F1)"
             >
@@ -93,7 +97,7 @@ export default function Header() {
             <div className="relative">
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 transition-colors"
                 aria-label="Search"
                 title="Search (Ctrl/Cmd + K)"
               >
@@ -103,7 +107,7 @@ export default function Header() {
               </button>
               
               {isSearchOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50">
                   <form onSubmit={handleSearch} className="p-4">
                     <div className="flex">
                       <input
@@ -111,7 +115,7 @@ export default function Header() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search posts..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white dark:bg-gray-700"
                         autoFocus
                       />
                       <button
@@ -128,10 +132,10 @@ export default function Header() {
 
             {/* User Menu */}
             {status === 'loading' ? (
-              <div className="animate-pulse bg-gray-200 h-8 w-8 rounded-full"></div>
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-8 rounded-full"></div>
             ) : session ? (
               <div className="relative group">
-                <button className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors">
+                <button className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                   <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-medium">
                       {session.user?.name?.[0] || session.user?.email?.[0] || 'U'}
@@ -145,24 +149,24 @@ export default function Header() {
                   </svg>
                 </button>
                 
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                   <div className="py-1">
                     <Link
                       href="/dashboard"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       Dashboard
                     </Link>
                     <Link
                       href="/dashboard/new"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       New Post
                     </Link>
-                    <hr className="my-1" />
+                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
                     <button
                       onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       Sign Out
                     </button>
