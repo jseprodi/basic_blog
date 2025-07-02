@@ -6,10 +6,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import RichTextEditor from '@/components/RichTextEditor';
 import CategoryTagManager from '@/components/CategoryTagManager';
+import { useToast } from '@/components/ToastProvider';
+import { validateForm, validationRules } from '@/components/FormValidation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function NewPostPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [excerpt, setExcerpt] = useState('');
@@ -18,7 +22,7 @@ export default function NewPostPage() {
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [tagIds, setTagIds] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -29,7 +33,28 @@ export default function NewPostPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');
+    setErrors({});
+
+    // Validate form
+    const formData = { title, content, excerpt, featuredImage };
+    const validation = validateForm(formData, {
+      title: validationRules.title,
+      content: validationRules.content,
+      excerpt: validationRules.excerpt,
+      featuredImage: featuredImage ? validationRules.url : {}
+    });
+
+    if (!validation.isValid) {
+      const fieldErrors: Record<string, string[]> = {};
+      validation.errors.forEach(error => {
+        const [field, message] = error.split(': ');
+        if (!fieldErrors[field]) fieldErrors[field] = [];
+        fieldErrors[field].push(message);
+      });
+      setErrors(fieldErrors);
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/posts', {
@@ -49,13 +74,14 @@ export default function NewPostPage() {
       });
 
       if (response.ok) {
+        showSuccess('Post created successfully!');
         router.push('/dashboard');
       } else {
         const data = await response.json();
-        setError(data.error || 'Failed to create post');
+        showError(data.error || 'Failed to create post');
       }
     } catch (error) {
-      setError('An error occurred. Please try again.');
+      showError('An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -156,17 +182,26 @@ export default function NewPostPage() {
                 </label>
               </div>
 
-              {error && (
-                <div className="text-red-600 text-sm">{error}</div>
+              {Object.keys(errors).length > 0 && (
+                <div className="space-y-2">
+                  {Object.entries(errors).map(([field, fieldErrors]) => (
+                    <div key={field} className="text-red-600 text-sm">
+                      {fieldErrors.map((error, index) => (
+                        <div key={index}>• {error}</div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               )}
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Creating...' : 'Create Post'}
-              </button>
+                              <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  {isSubmitting && <LoadingSpinner size="sm" color="white" />}
+                  <span>{isSubmitting ? 'Creating...' : 'Create Post'}</span>
+                </button>
             </form>
           </div>
         </div>
