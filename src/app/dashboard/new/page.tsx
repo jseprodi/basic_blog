@@ -9,6 +9,7 @@ import CategoryTagManager from '@/components/CategoryTagManager';
 import LoadingSpinner, { FormSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
 import { validateForm, validationRules } from '@/components/FormValidation';
+import { useKeyboardShortcuts } from '@/components/KeyboardShortcuts';
 
 export default function NewPostPage() {
   const { data: session, status } = useSession();
@@ -30,8 +31,8 @@ export default function NewPostPage() {
     }
   }, [status, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
 
@@ -87,6 +88,30 @@ export default function NewPostPage() {
     }
   };
 
+  const handleSave = () => {
+    if (!published) {
+      handleSubmit();
+    }
+  };
+
+  const handlePublish = () => {
+    setPublished(true);
+    handleSubmit();
+  };
+
+  const handlePreview = () => {
+    // For now, just save as draft and show a message
+    setPublished(false);
+    handleSubmit();
+  };
+
+  // Keyboard shortcuts
+  const keyboardShortcuts = useKeyboardShortcuts({
+    onSave: handleSave,
+    onPublish: handlePublish,
+    onPreview: handlePreview,
+  });
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -105,11 +130,15 @@ export default function NewPostPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {keyboardShortcuts}
       <div className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white shadow rounded-lg p-6">
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900">Create New Post</h1>
+              <p className="text-sm text-gray-600 mt-2">
+                Use Ctrl/Cmd + S to save, Ctrl/Cmd + Enter to publish, or F1 for all shortcuts
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -122,9 +151,18 @@ export default function NewPostPage() {
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
+                    errors.title ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {errors.title && (
+                  <div className="text-red-600 text-sm mt-1">
+                    {errors.title.map((error, index) => (
+                      <div key={index}>• {error}</div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -136,9 +174,18 @@ export default function NewPostPage() {
                   value={excerpt}
                   onChange={(e) => setExcerpt(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
+                    errors.excerpt ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="A brief summary of your post..."
                 />
+                {errors.excerpt && (
+                  <div className="text-red-600 text-sm mt-1">
+                    {errors.excerpt.map((error, index) => (
+                      <div key={index}>• {error}</div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -150,9 +197,18 @@ export default function NewPostPage() {
                   id="featuredImage"
                   value={featuredImage}
                   onChange={(e) => setFeaturedImage(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
+                    errors.featuredImage ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="https://example.com/image.jpg"
                 />
+                {errors.featuredImage && (
+                  <div className="text-red-600 text-sm mt-1">
+                    {errors.featuredImage.map((error, index) => (
+                      <div key={index}>• {error}</div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <CategoryTagManager
@@ -171,6 +227,13 @@ export default function NewPostPage() {
                   onChange={setContent}
                   placeholder="Write your post content here..."
                 />
+                {errors.content && (
+                  <div className="text-red-600 text-sm mt-1">
+                    {errors.content.map((error, index) => (
+                      <div key={index}>• {error}</div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center">
@@ -198,7 +261,17 @@ export default function NewPostPage() {
                 </div>
               )}
 
-                              <button
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                  className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  {isSubmitting && <LoadingSpinner size="sm" />}
+                  <span>{isSubmitting ? 'Saving...' : 'Save Draft'}</span>
+                </button>
+                <button
                   type="submit"
                   disabled={isSubmitting}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
@@ -206,6 +279,7 @@ export default function NewPostPage() {
                   {isSubmitting && <LoadingSpinner size="sm" />}
                   <span>{isSubmitting ? 'Creating...' : 'Create Post'}</span>
                 </button>
+              </div>
             </form>
           </div>
         </div>

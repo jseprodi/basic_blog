@@ -10,6 +10,7 @@ import CategoryTagManager from '@/components/CategoryTagManager';
 import LoadingSpinner, { FormSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
 import { validateForm, validationRules } from '@/components/FormValidation';
+import { useKeyboardShortcuts } from '@/components/KeyboardShortcuts';
 
 interface Post {
   id: number;
@@ -75,8 +76,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsSubmitting(true);
     setError('');
     setErrors({});
@@ -137,6 +138,27 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   };
 
+  const handleSave = () => {
+    handleSubmit();
+  };
+
+  const handlePublish = () => {
+    setPublished(true);
+    handleSubmit();
+  };
+
+  const handlePreview = () => {
+    // For now, just update and show a message
+    handleSubmit();
+  };
+
+  // Keyboard shortcuts
+  const keyboardShortcuts = useKeyboardShortcuts({
+    onSave: handleSave,
+    onPublish: handlePublish,
+    onPreview: handlePreview,
+  });
+
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -178,11 +200,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {keyboardShortcuts}
       <div className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white shadow rounded-lg p-6">
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900">Edit Post</h1>
+              <p className="text-sm text-gray-600 mt-2">
+                Use Ctrl/Cmd + S to save, Ctrl/Cmd + Enter to publish, or F1 for all shortcuts
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">

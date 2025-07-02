@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import Header from "@/components/Header";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
+          <KeyboardShortcuts />
           <Header />
           <Breadcrumbs />
           <main>{children}</main>

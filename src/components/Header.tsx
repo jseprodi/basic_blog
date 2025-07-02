@@ -24,6 +24,26 @@ export default function Header() {
     await signOut({ callbackUrl: '/' });
   };
 
+  const showKeyboardShortcuts = () => {
+    const shortcuts = [
+      { key: 'Ctrl/Cmd + S', description: 'Save post' },
+      { key: 'Ctrl/Cmd + Enter', description: 'Publish post' },
+      { key: 'Ctrl/Cmd + P', description: 'Preview post' },
+      { key: 'Ctrl/Cmd + N', description: 'New post' },
+      { key: 'Ctrl/Cmd + D', description: 'Go to dashboard' },
+      { key: 'Ctrl/Cmd + H', description: 'Go to home' },
+      { key: 'Ctrl/Cmd + K', description: 'Search' },
+      { key: 'F1 or Ctrl/Cmd + ?', description: 'Show keyboard shortcuts' },
+      { key: 'Escape', description: 'Clear search / Close modals' },
+    ];
+
+    const shortcutsText = shortcuts
+      .map(shortcut => `${shortcut.key}: ${shortcut.description}`)
+      .join('\n');
+
+    alert(`Keyboard Shortcuts:\n\n${shortcutsText}`);
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,12 +77,25 @@ export default function Header() {
 
           {/* Search and User Menu */}
           <div className="flex items-center space-x-4">
+            {/* Keyboard Shortcuts Help */}
+            <button
+              onClick={showKeyboardShortcuts}
+              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Keyboard Shortcuts"
+              title="Keyboard Shortcuts (F1)"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+
             {/* Search */}
             <div className="relative">
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Search"
+                title="Search (Ctrl/Cmd + K)"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
