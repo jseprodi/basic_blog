@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import LoadingSpinner, { DashboardPostSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
+import SecurityMonitor from '@/components/SecurityMonitor';
+import PWAStatus from '@/components/PWAStatus';
 
 interface Post {
   id: number;
@@ -120,6 +122,13 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white shadow rounded-lg p-6">
+            <SecurityMonitor />
+            
+            {/* PWA Status */}
+            <div className="mb-6">
+              <PWAStatus />
+            </div>
+            
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-gray-900">
                 Blog Dashboard
@@ -129,6 +138,28 @@ export default function DashboardPage() {
                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
               >
                 New Post
+              </Link>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex space-x-4 mb-6 pb-4 border-b">
+              <Link
+                href="/dashboard"
+                className="px-3 py-2 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600"
+              >
+                Posts
+              </Link>
+              <Link
+                href="/dashboard/images"
+                className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
+              >
+                Images
+              </Link>
+              <Link
+                href="/dashboard/pwa"
+                className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
+              >
+                PWA Settings
               </Link>
             </div>
 

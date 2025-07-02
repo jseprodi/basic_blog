@@ -35,6 +35,14 @@ A full-featured blog application built with Next.js 15, TypeScript, Tailwind CSS
 - **Search Results**: Clear search results with highlighting
 - **Category/Tag Filtering**: Organize content effectively
 
+### 📱 **Progressive Web App (PWA)**
+- **Offline Support**: Read posts even without internet connection
+- **Installable**: Add to home screen on mobile and desktop
+- **Fast Loading**: Intelligent caching for instant page loads
+- **Auto Updates**: Automatic service worker updates
+- **Push Notifications**: Real-time updates (when implemented)
+- **Native Experience**: App-like interface and interactions
+
 ### 🗄️ **Database & API**
 - **Prisma ORM**: Type-safe database operations
 - **SQLite Database**: Easy setup and development
@@ -48,6 +56,7 @@ A full-featured blog application built with Next.js 15, TypeScript, Tailwind CSS
 - **Styling**: Tailwind CSS
 - **Database**: SQLite with Prisma ORM
 - **Authentication**: NextAuth.js
+- **PWA**: Service Worker, Web App Manifest, Offline Support
 - **Deployment**: Ready for Vercel, Netlify, or any Node.js hosting
 
 ## 🚀 **Quick Start**

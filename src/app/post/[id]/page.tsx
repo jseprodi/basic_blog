@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Comments from '@/components/Comments';
 import React from 'react';
 import LoadingSpinner, { PostSkeleton } from '@/components/LoadingSpinner';
+import OptimizedImage from '@/components/OptimizedImage';
 
 interface Post {
   id: number;
@@ -88,10 +89,14 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
           {/* Featured Image */}
           {post.featuredImage && (
             <div className="w-full h-64 md:h-96 bg-gray-200">
-              <img
+              <OptimizedImage
                 src={post.featuredImage}
                 alt={post.title}
+                width={800}
+                height={400}
                 className="w-full h-full object-cover"
+                priority={true}
+                sizes="(max-width: 768px) 100vw, 800px"
               />
             </div>
           )}

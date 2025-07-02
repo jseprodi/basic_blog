@@ -113,6 +113,20 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         >
           🔗
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            const url = prompt('Enter image URL:');
+            if (url) {
+              const img = `<img src="${url}" alt="Image" style="max-width: 100%; height: auto;" />`;
+              document.execCommand('insertHTML', false, img);
+            }
+          }}
+          className="p-2 rounded hover:bg-gray-200"
+          title="Insert Image"
+        >
+          🖼️
+        </button>
       </div>
 
       {/* Editor */}

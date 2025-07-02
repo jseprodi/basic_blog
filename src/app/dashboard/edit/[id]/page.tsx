@@ -11,6 +11,7 @@ import LoadingSpinner, { FormSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
 import { validateForm, validationRules } from '@/components/FormValidation';
 import { useKeyboardShortcuts } from '@/components/KeyboardShortcuts';
+import ImageUpload from '@/components/ImageUpload';
 
 interface Post {
   id: number;
@@ -260,25 +261,60 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
               <div>
                 <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700 mb-2">
-                  Featured Image URL (Optional)
+                  Featured Image (Optional)
                 </label>
-                <input
-                  type="url"
-                  id="featuredImage"
-                  value={featuredImage}
-                  onChange={(e) => setFeaturedImage(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
-                    errors.featuredImage ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="https://example.com/image.jpg"
-                />
-                {errors.featuredImage && (
-                  <div className="text-red-600 text-sm mt-1">
-                    {errors.featuredImage.map((error, index) => (
-                      <div key={index}>• {error}</div>
-                    ))}
+                <div className="space-y-3">
+                  <input
+                    type="url"
+                    id="featuredImage"
+                    value={featuredImage}
+                    onChange={(e) => setFeaturedImage(e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 ${
+                      errors.featuredImage ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="https://example.com/image.jpg or upload an image below"
+                  />
+                  {errors.featuredImage && (
+                    <div className="text-red-600 text-sm mt-1">
+                      {errors.featuredImage.map((error, index) => (
+                        <div key={index}>• {error}</div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Image Upload Component */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <p className="text-sm text-gray-600 mb-3">Or upload an image:</p>
+                    <ImageUpload 
+                      onImageUploaded={(url) => setFeaturedImage(url)}
+                      className="max-w-md"
+                    />
                   </div>
-                )}
+                  
+                  {/* Image Preview */}
+                  {featuredImage && (
+                    <div className="mt-3">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+                      <div className="relative max-w-xs">
+                        <img
+                          src={featuredImage}
+                          alt="Featured image preview"
+                          className="w-full h-32 object-cover rounded-lg border"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFeaturedImage('')}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <CategoryTagManager
