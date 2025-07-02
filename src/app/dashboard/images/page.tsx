@@ -4,11 +4,11 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
-import ImageManager from '@/components/ImageManager';
+import { DynamicImageManager } from '@/components/DynamicImports';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function ImagesPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function ImagesPage() {
         </div>
 
         {/* Image Manager */}
-        <ImageManager />
+        <DynamicImageManager />
       </div>
     </div>
   );

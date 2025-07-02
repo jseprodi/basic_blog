@@ -80,7 +80,7 @@ A full-featured blog application built with Next.js 15, TypeScript, Tailwind CSS
 
 3. **Set up environment variables**
    ```bash
-   cp .env.example .env
+   cp env.example .env
    ```
    
    Edit `.env` and add your configuration:

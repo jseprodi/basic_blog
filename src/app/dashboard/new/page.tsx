@@ -3,14 +3,14 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import RichTextEditor from '@/components/RichTextEditor';
-import CategoryTagManager from '@/components/CategoryTagManager';
+
+import { DynamicRichTextEditor } from '@/components/DynamicImports';
+import { DynamicCategoryTagManager } from '@/components/DynamicImports';
+import { DynamicImageUpload } from '@/components/DynamicImports';
 import LoadingSpinner, { FormSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
 import { validateForm, validationRules } from '@/components/FormValidation';
 import { useKeyboardShortcuts } from '@/components/KeyboardShortcuts';
-import ImageUpload from '@/components/ImageUpload';
 import OptimizedImage from '@/components/OptimizedImage';
 
 export default function NewPostPage() {
@@ -83,7 +83,7 @@ export default function NewPostPage() {
         const data = await response.json();
         showError(data.error || 'Failed to create post');
       }
-    } catch (error) {
+    } catch {
       showError('An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -216,8 +216,8 @@ export default function NewPostPage() {
                   {/* Image Upload Component */}
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <p className="text-sm text-gray-600 mb-3">Or upload an image:</p>
-                    <ImageUpload 
-                      onImageUploaded={(url) => setFeaturedImage(url)}
+                    <DynamicImageUpload 
+                      onImageUploaded={(url: string) => setFeaturedImage(url)}
                       className="max-w-md"
                     />
                   </div>
@@ -249,7 +249,7 @@ export default function NewPostPage() {
                 </div>
               </div>
 
-              <CategoryTagManager
+              <DynamicCategoryTagManager
                 selectedCategoryId={categoryId}
                 selectedTagIds={tagIds}
                 onCategoryChange={setCategoryId}
@@ -260,7 +260,7 @@ export default function NewPostPage() {
                 <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
                   Content
                 </label>
-                <RichTextEditor
+                <DynamicRichTextEditor
                   value={content}
                   onChange={setContent}
                   placeholder="Write your post content here..."

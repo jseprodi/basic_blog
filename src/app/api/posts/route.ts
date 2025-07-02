@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@/generated/prisma';
+import { validateRequestBody, createPostSchema, sanitizeHtml } from '@/lib/validation';
 
 const prisma = new PrismaClient();
 
@@ -40,11 +41,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, content, excerpt, featuredImage, published = false, categoryId, tagIds = [] } = await request.json();
-
-    if (!title || !content) {
-      return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
+    // Validate request body
+    const validation = await validateRequestBody(request, createPostSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+
+    const { title, content, excerpt, featuredImage, published, categoryId, tagIds = [] } = validation.data;
+
+    // Sanitize HTML content
+    const sanitizedContent = sanitizeHtml(content);
+    const sanitizedExcerpt = excerpt ? sanitizeHtml(excerpt) : undefined;
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
@@ -54,11 +61,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Validate category exists if provided
+    if (categoryId) {
+      const category = await prisma.category.findUnique({
+        where: { id: categoryId },
+      });
+      if (!category) {
+        return NextResponse.json({ error: 'Category not found' }, { status: 400 });
+      }
+    }
+
+    // Validate tags exist if provided
+    if (tagIds && tagIds.length > 0) {
+      const tags = await prisma.tag.findMany({
+        where: { id: { in: tagIds } },
+      });
+      if (tags.length !== tagIds.length) {
+        return NextResponse.json({ error: 'One or more tags not found' }, { status: 400 });
+      }
+    }
+
     const post = await prisma.post.create({
       data: {
         title,
-        content,
-        excerpt,
+        content: sanitizedContent,
+        excerpt: sanitizedExcerpt,
         featuredImage,
         published,
         authorId: user.id,

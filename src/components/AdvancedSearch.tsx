@@ -1,301 +1,305 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Search, X, Filter, SortAsc, SortDesc } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useToast } from './ToastProvider';
 
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
+interface SearchResult {
+  id: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  tags: string[];
+  publishedAt: string;
+  author: string;
+  readTime: number;
+  score: number;
 }
 
-interface Tag {
-  id: number;
-  name: string;
-  slug: string;
+interface AdvancedSearchProps {
+  onSearch?: (results: SearchResult[]) => void;
+  placeholder?: string;
+  className?: string;
 }
 
-interface SearchFilters {
-  query: string;
-  categoryId: number | null;
-  tagIds: number[];
-  dateFrom: string;
-  dateTo: string;
-  sortBy: 'newest' | 'oldest' | 'title' | 'popular';
-}
-
-export default function AdvancedSearch() {
+export default function AdvancedSearch({ 
+  onSearch, 
+  placeholder = "Search posts, categories, tags...",
+  className = ""
+}: AdvancedSearchProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { showError } = useToast();
-  
-  const [filters, setFilters] = useState<SearchFilters>({
-    query: searchParams.get('q') || '',
-    categoryId: searchParams.get('category') ? parseInt(searchParams.get('category')!) : null,
-    tagIds: searchParams.get('tags') ? searchParams.get('tags')!.split(',').map(id => parseInt(id)) : [],
-    dateFrom: searchParams.get('from') || '',
-    dateTo: searchParams.get('to') || '',
-    sortBy: (searchParams.get('sort') as SearchFilters['sortBy']) || 'newest'
+  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [isSearching, setIsSearching] = useState(false);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    category: '',
+    tags: [] as string[],
+    dateRange: '',
+    sortBy: 'relevance' as 'relevance' | 'date' | 'title' | 'readTime',
+    sortOrder: 'desc' as 'asc' | 'desc'
   });
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (searchQuery: string, searchFilters: typeof filters) => {
+      if (!searchQuery.trim()) {
+        setResults([]);
+        return;
+      }
 
+      setIsSearching(true);
+      try {
+        const params = new URLSearchParams({
+          q: searchQuery,
+          category: searchFilters.category,
+          tags: searchFilters.tags.join(','),
+          dateRange: searchFilters.dateRange,
+          sortBy: searchFilters.sortBy,
+          sortOrder: searchFilters.sortOrder
+        });
+
+        const response = await fetch(`/api/search?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          setResults(data.results || []);
+          onSearch?.(data.results || []);
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        setResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300),
+    [onSearch]
+  );
+
+  // Update search when query or filters change
   useEffect(() => {
-    fetchCategories();
-    fetchTags();
-  }, []);
+    debouncedSearch(query, filters);
+  }, [query, filters, debouncedSearch]);
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/categories');
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
+  // Update URL when search changes
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    if (query) {
+      params.set('q', query);
+    } else {
+      params.delete('q');
     }
-  };
-
-  const fetchTags = async () => {
-    try {
-      const response = await fetch('/api/tags');
-      if (response.ok) {
-        const data = await response.json();
-        setTags(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch tags:', error);
-    }
-  };
-
-  const updateSearchParams = useCallback((newFilters: SearchFilters) => {
-    const params = new URLSearchParams();
     
-    if (newFilters.query) params.set('q', newFilters.query);
-    if (newFilters.categoryId) params.set('category', newFilters.categoryId.toString());
-    if (newFilters.tagIds.length > 0) params.set('tags', newFilters.tagIds.join(','));
-    if (newFilters.dateFrom) params.set('from', newFilters.dateFrom);
-    if (newFilters.dateTo) params.set('to', newFilters.dateTo);
-    if (newFilters.sortBy !== 'newest') params.set('sort', newFilters.sortBy);
+    // Update filters in URL
+    if (filters.category) params.set('category', filters.category);
+    if (filters.tags.length > 0) params.set('tags', filters.tags.join(','));
+    if (filters.dateRange) params.set('dateRange', filters.dateRange);
+    if (filters.sortBy !== 'relevance') params.set('sortBy', filters.sortBy);
+    if (filters.sortOrder !== 'desc') params.set('sortOrder', filters.sortOrder);
 
-    const queryString = params.toString();
-    const newUrl = queryString ? `/?${queryString}` : '/';
-    router.push(newUrl);
-  }, [router]);
+    const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [query, filters, router, searchParams]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    updateSearchParams(filters);
-    setIsLoading(false);
+    debouncedSearch(query, filters);
   };
 
-  const handleFilterChange = (key: keyof SearchFilters, value: any) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
+  const clearSearch = () => {
+    setQuery('');
+    setResults([]);
+    setFilters({
+      category: '',
+      tags: [],
+      dateRange: '',
+      sortBy: 'relevance',
+      sortOrder: 'desc'
+    });
   };
 
-  const handleTagToggle = (tagId: number) => {
-    const newTagIds = filters.tagIds.includes(tagId)
-      ? filters.tagIds.filter(id => id !== tagId)
-      : [...filters.tagIds, tagId];
-    handleFilterChange('tagIds', newTagIds);
+  const toggleSortOrder = () => {
+    setFilters(prev => ({
+      ...prev,
+      sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
+    }));
   };
-
-  const clearFilters = () => {
-    const clearedFilters: SearchFilters = {
-      query: '',
-      categoryId: null,
-      tagIds: [],
-      dateFrom: '',
-      dateTo: '',
-      sortBy: 'newest'
-    };
-    setFilters(clearedFilters);
-    updateSearchParams(clearedFilters);
-  };
-
-  const hasActiveFilters = filters.query || filters.categoryId || filters.tagIds.length > 0 || filters.dateFrom || filters.dateTo || filters.sortBy !== 'newest';
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
-      <form onSubmit={handleSearch} className="space-y-4">
-        {/* Basic Search */}
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search posts..."
-              value={filters.query}
-              onChange={(e) => handleFilterChange('query', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {isLoading ? 'Searching...' : 'Search'}
-          </button>
-        </div>
-
-        {/* Advanced Filters Toggle */}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-          >
-            {isExpanded ? 'Hide' : 'Show'} Advanced Filters
-          </button>
-          {hasActiveFilters && (
+    <div className={`relative ${className}`}>
+      {/* Search Input */}
+      <form onSubmit={handleSearch} className="relative">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={placeholder}
+            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+          />
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+            {query && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
             <button
               type="button"
-              onClick={clearFilters}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-1 rounded ${
+                showFilters 
+                  ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400' 
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
             >
-              Clear All
+              <Filter className="w-4 h-4" />
             </button>
-          )}
+          </div>
         </div>
+      </form>
 
-        {/* Advanced Filters */}
-        {isExpanded && (
-          <div className="space-y-4 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Category Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
-                <select
-                  value={filters.categoryId || ''}
-                  onChange={(e) => handleFilterChange('categoryId', e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="">All Categories</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sort By */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Sort By
-                </label>
-                <select
-                  value={filters.sortBy}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="title">Title A-Z</option>
-                  <option value="popular">Most Popular</option>
-                </select>
-              </div>
-
-              {/* Date From */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  From Date
-                </label>
-                <input
-                  type="date"
-                  value={filters.dateFrom}
-                  onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              {/* Date To */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  To Date
-                </label>
-                <input
-                  type="date"
-                  value={filters.dateTo}
-                  onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* Tags Filter */}
+      {/* Advanced Filters */}
+      {showFilters && (
+        <div className="mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Category Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Category
               </label>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => handleTagToggle(tag.id)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      filters.tagIds.includes(tag.id)
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {tag.name}
-                  </button>
-                ))}
-              </div>
+              <select
+                value={filters.category}
+                onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              >
+                <option value="">All Categories</option>
+                <option value="technology">Technology</option>
+                <option value="design">Design</option>
+                <option value="business">Business</option>
+                <option value="lifestyle">Lifestyle</option>
+              </select>
             </div>
 
-            {/* Active Filters Display */}
-            {hasActiveFilters && (
-              <div className="pt-4 border-t border-gray-200">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Active Filters:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {filters.query && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                      Search: "{filters.query}"
-                    </span>
-                  )}
-                  {filters.categoryId && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                      Category: {categories.find(c => c.id === filters.categoryId)?.name}
-                    </span>
-                  )}
-                  {filters.tagIds.map(tagId => (
-                    <span key={tagId} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
-                      Tag: {tags.find(t => t.id === tagId)?.name}
-                    </span>
-                  ))}
-                  {filters.dateFrom && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                      From: {new Date(filters.dateFrom).toLocaleDateString()}
-                    </span>
-                  )}
-                  {filters.dateTo && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                      To: {new Date(filters.dateTo).toLocaleDateString()}
-                    </span>
-                  )}
-                  {filters.sortBy !== 'newest' && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                      Sort: {filters.sortBy}
-                    </span>
-                  )}
+            {/* Date Range Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Date Range
+              </label>
+              <select
+                value={filters.dateRange}
+                onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              >
+                <option value="">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+              </select>
+            </div>
+
+            {/* Sort By */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Sort By
+              </label>
+              <select
+                value={filters.sortBy}
+                onChange={(e) => setFilters(prev => ({ 
+                  ...prev, 
+                  sortBy: e.target.value as 'relevance' | 'date' | 'title' | 'readTime'
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              >
+                <option value="relevance">Relevance</option>
+                <option value="date">Date</option>
+                <option value="title">Title</option>
+                <option value="readTime">Read Time</option>
+              </select>
+            </div>
+
+            {/* Sort Order */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Sort Order
+              </label>
+              <button
+                type="button"
+                onClick={toggleSortOrder}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white flex items-center justify-between"
+              >
+                <span className="capitalize">{filters.sortOrder}</span>
+                {filters.sortOrder === 'asc' ? (
+                  <SortAsc className="w-4 h-4" />
+                ) : (
+                  <SortDesc className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Results */}
+      {results.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {results.map((result) => (
+            <div
+              key={result.id}
+              className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => router.push(`/post/${result.id}`)}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    {result.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                    {result.excerpt}
+                  </p>
+                  <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                    <span>{result.author}</span>
+                    <span>{result.readTime} min read</span>
+                    <span>{result.category}</span>
+                    <span>Score: {result.score.toFixed(1)}</span>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </form>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isSearching && (
+        <div className="mt-4 text-center text-gray-500 dark:text-gray-400">
+          Searching...
+        </div>
+      )}
+
+      {/* No Results */}
+      {!isSearching && query && results.length === 0 && (
+        <div className="mt-4 text-center text-gray-500 dark:text-gray-400">
+          No results found for &ldquo;{query}&rdquo;
+        </div>
+      )}
     </div>
   );
+}
+
+// Debounce utility function
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
 } 

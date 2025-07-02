@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import Comments from '@/components/Comments';
+import { DynamicComments } from '@/components/DynamicImports';
 import React from 'react';
-import LoadingSpinner, { PostSkeleton } from '@/components/LoadingSpinner';
+import { PostSkeleton } from '@/components/LoadingSpinner';
 import OptimizedImage from '@/components/OptimizedImage';
 
 interface Post {
@@ -33,11 +33,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchPost();
-  }, [resolvedParams.id]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       const response = await fetch(`/api/public/posts/${resolvedParams.id}`);
       if (response.ok) {
@@ -46,12 +42,16 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
       } else {
         setError('Post not found');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to load post');
     } finally {
       setLoading(false);
     }
-  };
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    fetchPost();
+  }, [fetchPost]);
 
   if (loading) {
     return (
@@ -158,7 +158,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
             </article>
 
             {/* Comments Section */}
-            <Comments postId={post.id} />
+            <DynamicComments postId={post.id} />
 
             <div className="mt-12 pt-8 border-t border-gray-200">
               <Link

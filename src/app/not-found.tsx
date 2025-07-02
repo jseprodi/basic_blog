@@ -8,7 +8,7 @@ export default function NotFound() {
           <div className="text-6xl font-bold text-indigo-600 mb-4">404</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Page Not Found</h1>
           <p className="text-lg text-gray-600 mb-8">
-            Sorry, we couldn't find the page you're looking for. It might have been moved, deleted, or you entered the wrong URL.
+            Sorry, we couldn&apos;t find the page you&apos;re looking for. It might have been moved, deleted, or you entered the wrong URL.
           </p>
         </div>
         
@@ -21,7 +21,7 @@ export default function NotFound() {
           </Link>
           
           <div className="text-sm text-gray-500">
-            <p>Or try searching for what you're looking for:</p>
+            <p>Or try searching for what you&apos;re looking for:</p>
             <Link href="/" className="text-indigo-600 hover:text-indigo-700 underline">
               Browse all posts
             </Link>

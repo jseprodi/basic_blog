@@ -16,12 +16,13 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "analyze": "ANALYZE=true npm run build",
+    "analyze": "cross-env ANALYZE=true npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "dependencies": {
     "@prisma/client": "^6.11.0",
+    "@sentry/nextjs": "^9.34.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/multer": "^2.0.0",
     "bcryptjs": "^3.0.2",
@@ -33,22 +34,27 @@
     "prisma": "^6.11.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-quill": "^2.0.0"
+    "react-quill": "^2.0.0",
+    "zod": "^3.25.69"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@next/bundle-analyzer": "^15.3.4",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
     "jest": "^30.0.3",
     "jest-environment-jsdom": "^30.0.2",
+    "msw": "^2.10.2",
     "tailwindcss": "^4",
     "tsx": "^4.20.3",
     "typescript": "^5"

@@ -1,14 +1,25 @@
-const CACHE_NAME = 'blog-cache-v1';
-const STATIC_CACHE = 'static-cache-v1';
-const DYNAMIC_CACHE = 'dynamic-cache-v1';
+const CACHE_NAME = 'blog-cache-v2';
+const DYNAMIC_CACHE_NAME = 'blog-dynamic-v2';
+const STATIC_CACHE_NAME = 'blog-static-v2';
 
-// Files to cache immediately
-const STATIC_FILES = [
+// Static assets to cache immediately
+const STATIC_ASSETS = [
   '/',
   '/offline',
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  '/vercel.svg',
+  '/next.svg',
+];
+
+// Dynamic routes to cache on first visit
+const DYNAMIC_ROUTES = [
+  '/dashboard',
+  '/dashboard/new',
+  '/dashboard/images',
+  '/dashboard/pwa',
+  '/login',
 ];
 
 // API routes to cache
@@ -18,11 +29,25 @@ const API_ROUTES = [
   '/api/tags',
 ];
 
-// Install event - cache static files
+// Cache strategies
+const CACHE_STRATEGIES = {
+  // Cache first for static assets
+  STATIC_FIRST: 'static-first',
+  // Network first for API calls
+  NETWORK_FIRST: 'network-first',
+  // Stale while revalidate for dynamic content
+  STALE_WHILE_REVALIDATE: 'stale-while-revalidate',
+  // Cache only for offline assets
+  CACHE_ONLY: 'cache-only',
+};
+
+// Install event - cache static assets
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing...');
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll(STATIC_FILES);
+    caches.open(STATIC_CACHE_NAME).then((cache) => {
+      console.log('Caching static assets');
+      return cache.addAll(STATIC_ASSETS);
     })
   );
   self.skipWaiting();
@@ -30,11 +55,15 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+          if (cacheName !== CACHE_NAME && 
+              cacheName !== DYNAMIC_CACHE_NAME && 
+              cacheName !== STATIC_CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -44,105 +73,114 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - handle requests
+// Fetch event - handle different caching strategies
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Handle API requests
+  // Skip non-GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Handle different types of requests
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(handleApiRequest(request));
-    return;
-  }
-
-  // Handle navigation requests
-  if (request.mode === 'navigate') {
-    event.respondWith(handleNavigationRequest(request));
-    return;
-  }
-
-  // Handle static assets
-  if (request.destination === 'image' || 
-      request.destination === 'style' || 
-      request.destination === 'script') {
+  } else if (url.pathname.startsWith('/dashboard/') || url.pathname === '/dashboard') {
+    event.respondWith(handleDashboardRequest(request));
+  } else if (url.pathname.startsWith('/post/')) {
+    event.respondWith(handlePostRequest(request));
+  } else if (isStaticAsset(url.pathname)) {
     event.respondWith(handleStaticRequest(request));
-    return;
+  } else {
+    event.respondWith(handleDefaultRequest(request));
   }
-
-  // Default: network first, fallback to cache
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(DYNAMIC_CACHE).then((cache) => {
-            cache.put(request, responseClone);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        return caches.match(request);
-      })
-  );
 });
 
-// Handle API requests with cache-first strategy
+// API request handler - Network first with cache fallback
 async function handleApiRequest(request) {
   try {
-    // Try network first
-    const response = await fetch(request);
-    if (response.status === 200) {
-      const responseClone = response.clone();
-      caches.open(DYNAMIC_CACHE).then((cache) => {
-        cache.put(request, responseClone);
-      });
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+      return networkResponse;
     }
-    return response;
   } catch (error) {
-    // Fallback to cache
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
-    // Return offline response for API requests
-    return new Response(
-      JSON.stringify({ 
-        error: 'Offline - Please check your connection',
-        cached: true 
-      }),
-      {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' }
+    console.log('Network failed for API request, trying cache:', request.url);
+  }
+
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  return new Response(JSON.stringify({ error: 'Offline - API unavailable' }), {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+// Dashboard request handler - Cache first for better performance
+async function handleDashboardRequest(request) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    // Update cache in background
+    fetch(request).then((response) => {
+      if (response.ok) {
+        caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+          cache.put(request, response);
+        });
       }
-    );
+    });
+    return cachedResponse;
   }
-}
 
-// Handle navigation requests with offline fallback
-async function handleNavigationRequest(request) {
   try {
-    const response = await fetch(request);
-    if (response.status === 200) {
-      const responseClone = response.clone();
-      caches.open(DYNAMIC_CACHE).then((cache) => {
-        cache.put(request, responseClone);
-      });
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+      return networkResponse;
     }
-    return response;
   } catch (error) {
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
-    // Return offline page
-    return caches.match('/offline');
+    console.log('Network failed for dashboard request:', request.url);
   }
+
+  return caches.match('/offline');
 }
 
-// Handle static assets with cache-first strategy
+// Post request handler - Stale while revalidate
+async function handlePostRequest(request) {
+  const cache = await caches.open(DYNAMIC_CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+
+  // Return cached response immediately if available
+  if (cachedResponse) {
+    // Update cache in background
+    fetch(request).then((response) => {
+      if (response.ok) {
+        cache.put(request, response);
+      }
+    });
+    return cachedResponse;
+  }
+
+  // Try network first for new posts
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      cache.put(request, networkResponse.clone());
+      return networkResponse;
+    }
+  } catch (error) {
+    console.log('Network failed for post request:', request.url);
+  }
+
+  return caches.match('/offline');
+}
+
+// Static asset handler - Cache first
 async function handleStaticRequest(request) {
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
@@ -150,31 +188,51 @@ async function handleStaticRequest(request) {
   }
 
   try {
-    const response = await fetch(request);
-    if (response.status === 200) {
-      const responseClone = response.clone();
-      caches.open(DYNAMIC_CACHE).then((cache) => {
-        cache.put(request, responseClone);
-      });
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      const cache = await caches.open(STATIC_CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+      return networkResponse;
     }
-    return response;
   } catch (error) {
-    // Return a placeholder for images
-    if (request.destination === 'image') {
-      return new Response(
-        `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-          <rect width="200" height="200" fill="#f3f4f6"/>
-          <text x="100" y="100" text-anchor="middle" fill="#9ca3af" font-family="Arial" font-size="14">
-            Image not available
-          </text>
-        </svg>`,
-        {
-          headers: { 'Content-Type': 'image/svg+xml' }
-        }
-      );
-    }
-    throw error;
+    console.log('Network failed for static request:', request.url);
   }
+
+  return new Response('Not found', { status: 404 });
+}
+
+// Default request handler - Network first
+async function handleDefaultRequest(request) {
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      return networkResponse;
+    }
+  } catch (error) {
+    console.log('Network failed for default request:', request.url);
+  }
+
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  return caches.match('/offline');
+}
+
+// Helper function to check if URL is a static asset
+function isStaticAsset(pathname) {
+  return pathname.startsWith('/icons/') ||
+         pathname.startsWith('/uploads/') ||
+         pathname.endsWith('.svg') ||
+         pathname.endsWith('.png') ||
+         pathname.endsWith('.jpg') ||
+         pathname.endsWith('.jpeg') ||
+         pathname.endsWith('.gif') ||
+         pathname.endsWith('.webp') ||
+         pathname.endsWith('.ico') ||
+         pathname.endsWith('.css') ||
+         pathname.endsWith('.js');
 }
 
 // Background sync for offline actions
@@ -184,7 +242,33 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-// Handle push notifications
+async function doBackgroundSync() {
+  try {
+    // Sync any pending offline actions
+    console.log('Performing background sync...');
+    
+    // Example: Sync offline comments, drafts, etc.
+    const offlineData = await getOfflineData();
+    if (offlineData.length > 0) {
+      await syncOfflineData(offlineData);
+    }
+  } catch (error) {
+    console.error('Background sync failed:', error);
+  }
+}
+
+// Helper functions for offline data management
+async function getOfflineData() {
+  // Implementation for getting offline data
+  return [];
+}
+
+async function syncOfflineData(data) {
+  // Implementation for syncing offline data
+  console.log('Syncing offline data:', data);
+}
+
+// Push notification handler
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'New blog post available!',
@@ -193,20 +277,20 @@ self.addEventListener('push', (event) => {
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: 1
+      primaryKey: 1,
     },
     actions: [
       {
         action: 'explore',
         title: 'View Post',
-        icon: '/icons/icon-72x72.png'
+        icon: '/icons/icon-192x192.png',
       },
       {
         action: 'close',
         title: 'Close',
-        icon: '/icons/icon-72x72.png'
-      }
-    ]
+        icon: '/icons/icon-192x192.png',
+      },
+    ],
   };
 
   event.waitUntil(
@@ -214,7 +298,7 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Handle notification clicks
+// Notification click handler
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
@@ -225,26 +309,16 @@ self.addEventListener('notificationclick', (event) => {
   }
 });
 
-// Background sync function
-async function doBackgroundSync() {
-  // Sync any pending data when connection is restored
-  console.log('Background sync completed');
-}
-
-// Message handling for cache management
+// Message handler for communication with main thread
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
   
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
+  if (event.data && event.data.type === 'CACHE_DYNAMIC_IMPORT') {
     event.waitUntil(
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            return caches.delete(cacheName);
-          })
-        );
+      caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+        return cache.add(event.data.url);
       })
     );
   }

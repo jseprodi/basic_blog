@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './ThemeProvider';
 
@@ -11,6 +11,11 @@ export default function Header() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +84,7 @@ export default function Header() {
           {/* Search and User Menu */}
           <div className="flex items-center space-x-4">
             {/* Theme Toggle */}
-            <ThemeToggle />
+            {isMounted && <ThemeToggle />}
 
             {/* Keyboard Shortcuts Help */}
             <button

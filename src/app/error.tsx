@@ -22,7 +22,7 @@ export default function Error({
           <div className="text-6xl font-bold text-red-600 mb-4">500</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Something went wrong!</h1>
           <p className="text-lg text-gray-600 mb-8">
-            We're sorry, but something unexpected happened. Please try again or contact support if the problem persists.
+            We&apos;re sorry, but something unexpected happened. Please try again or contact support if the problem persists.
           </p>
         </div>
         

@@ -2,16 +2,16 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import React from 'react';
-import RichTextEditor from '@/components/RichTextEditor';
-import CategoryTagManager from '@/components/CategoryTagManager';
-import LoadingSpinner, { FormSkeleton } from '@/components/LoadingSpinner';
+import { DynamicRichTextEditor } from '@/components/DynamicImports';
+import { DynamicCategoryTagManager } from '@/components/DynamicImports';
+import { DynamicImageUpload } from '@/components/DynamicImports';
+import { FormSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
 import { validateForm, validationRules } from '@/components/FormValidation';
 import { useKeyboardShortcuts } from '@/components/KeyboardShortcuts';
-import ImageUpload from '@/components/ImageUpload';
 import OptimizedImage from '@/components/OptimizedImage';
 
 interface Post {
@@ -43,19 +43,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const { showSuccess, showError } = useToast();
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
-
-  useEffect(() => {
-    if (session) {
-      fetchPost();
-    }
-  }, [session, resolvedParams.id]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       const response = await fetch(`/api/posts/${resolvedParams.id}`);
       if (response.ok) {
@@ -71,12 +59,24 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       } else {
         setError('Post not found');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to load post');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (session) {
+      fetchPost();
+    }
+  }, [session, fetchPost]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -131,7 +131,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         setError(errorMessage);
         showError(errorMessage);
       }
-    } catch (error) {
+    } catch {
       const errorMessage = 'An error occurred. Please try again.';
       setError(errorMessage);
       showError(errorMessage);
@@ -286,8 +286,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   {/* Image Upload Component */}
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <p className="text-sm text-gray-600 mb-3">Or upload an image:</p>
-                    <ImageUpload 
-                      onImageUploaded={(url) => setFeaturedImage(url)}
+                    <DynamicImageUpload 
+                      onImageUploaded={(url: string) => setFeaturedImage(url)}
                       className="max-w-md"
                     />
                   </div>
@@ -319,7 +319,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 </div>
               </div>
 
-              <CategoryTagManager
+              <DynamicCategoryTagManager
                 selectedCategoryId={categoryId}
                 selectedTagIds={tagIds}
                 onCategoryChange={setCategoryId}
@@ -330,7 +330,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
                   Content
                 </label>
-                <RichTextEditor
+                <DynamicRichTextEditor
                   value={content}
                   onChange={setContent}
                   placeholder="Write your post content here..."

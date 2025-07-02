@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@/generated/prisma';
+import { validateRequestBody, createCommentSchema, sanitizeHtml } from '@/lib/validation';
 
 const prisma = new PrismaClient();
 
@@ -10,9 +11,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const postId = parseInt(id);
+    
+    if (isNaN(postId)) {
+      return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 });
+    }
+
     const comments = await prisma.comment.findMany({
       where: {
-        postId: parseInt(id),
+        postId,
         approved: true,
       },
       include: {
@@ -41,24 +48,27 @@ export async function POST(
   try {
     const session = await getServerSession();
     const { id } = await params;
-    const { content, authorName, authorEmail } = await request.json();
-
-    if (!content || !content.trim()) {
-      return NextResponse.json({ error: 'Comment content is required' }, { status: 400 });
+    const postId = parseInt(id);
+    
+    if (isNaN(postId)) {
+      return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 });
     }
 
-    if (!authorName || !authorName.trim()) {
-      return NextResponse.json({ error: 'Author name is required' }, { status: 400 });
+    // Validate request body
+    const validation = await validateRequestBody(request, createCommentSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    if (!authorEmail || !authorEmail.trim()) {
-      return NextResponse.json({ error: 'Author email is required' }, { status: 400 });
-    }
+    const { content, authorName, authorEmail } = validation.data;
+
+    // Sanitize content
+    const sanitizedContent = sanitizeHtml(content);
 
     // Check if post exists and is published
     const post = await prisma.post.findFirst({
       where: {
-        id: parseInt(id),
+        id: postId,
         published: true,
       },
     });
@@ -78,10 +88,10 @@ export async function POST(
 
     const comment = await prisma.comment.create({
       data: {
-        content: content.trim(),
+        content: sanitizedContent,
         authorName: authorName.trim(),
         authorEmail: authorEmail.trim(),
-        postId: parseInt(id),
+        postId,
         userId,
         approved: userId !== null, // Auto-approve comments from logged-in users
       },

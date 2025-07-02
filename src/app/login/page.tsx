@@ -1,6 +1,6 @@
 'use client';
 
-import { signIn, getSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ToastProvider';
@@ -33,7 +33,7 @@ export default function LoginPage() {
         showSuccess('Successfully signed in!');
         router.push('/dashboard');
       }
-    } catch (error) {
+    } catch {
       const errorMessage = 'An error occurred. Please try again.';
       setError(errorMessage);
       showError(errorMessage);

@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import LoadingSpinner, { DashboardPostSkeleton } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/ToastProvider';
-import SecurityMonitor from '@/components/SecurityMonitor';
-import PWAStatus from '@/components/PWAStatus';
+import { DynamicSecurityMonitor } from '@/components/DynamicImports';
+import { DynamicPWAStatus } from '@/components/DynamicImports';
 
 interface Post {
   id: number;
@@ -122,11 +122,11 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white shadow rounded-lg p-6">
-            <SecurityMonitor />
+            <DynamicSecurityMonitor />
             
             {/* PWA Status */}
             <div className="mb-6">
-              <PWAStatus />
+              <DynamicPWAStatus />
             </div>
             
             <div className="flex justify-between items-center mb-6">

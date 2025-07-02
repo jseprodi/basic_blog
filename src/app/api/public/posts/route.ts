@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
+import { validateQueryParams, searchSchema } from '@/lib/validation';
 
 const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    
+    // Validate search parameter if provided
+    if (searchParams.has('search')) {
+      const validation = validateQueryParams(searchParams, searchSchema);
+      if (!validation.success) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
+      }
+    }
+    
     const search = searchParams.get('search');
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
