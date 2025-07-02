@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@/generated/prisma';
 import { validateRequestBody, createPostSchema, sanitizeHtml } from '@/lib/validation';
+import { reportError, addBreadcrumb } from '@/lib/error-reporting';
 
 const prisma = new PrismaClient();
 
 export async function GET() {
+  let session;
   try {
-    const session = await getServerSession();
+    addBreadcrumb('API Request', 'posts.get', { endpoint: '/api/posts' });
+    
+    session = await getServerSession();
     if (!session || !session.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -29,6 +33,11 @@ export async function GET() {
 
     return NextResponse.json(posts);
   } catch (error) {
+    reportError(error as Error, {
+      endpoint: '/api/posts',
+      method: 'GET',
+      userId: session?.user?.email,
+    });
     console.error('Error fetching posts:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

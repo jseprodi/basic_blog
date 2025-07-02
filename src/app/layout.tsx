@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import ToastProvider from "@/components/ToastProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import PWAServiceWorker from "@/components/PWAServiceWorker";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -103,32 +104,34 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} h-full`}>
-        <Providers>
-          <ToastProvider>
-            <div className="min-h-full flex flex-col">
-              <Header />
-              <main className="flex-1">
-                {children}
-              </main>
-              <footer className="bg-gray-900 text-white py-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center">
-                    <p className="text-gray-400">
-                      © {new Date().getFullYear()} My Blog. All rights reserved.
-                    </p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Built with Next.js, TypeScript, and Tailwind CSS
-                    </p>
+        <ErrorBoundary>
+          <Providers>
+            <ToastProvider>
+              <div className="min-h-full flex flex-col">
+                <Header />
+                <main className="flex-1">
+                  {children}
+                </main>
+                <footer className="bg-gray-900 text-white py-8">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center">
+                      <p className="text-gray-400">
+                        © {new Date().getFullYear()} My Blog. All rights reserved.
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Built with Next.js, TypeScript, and Tailwind CSS
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </footer>
-            </div>
-            
-            {/* PWA Components */}
-            <PWAInstallPrompt />
-            <PWAServiceWorker />
-          </ToastProvider>
-        </Providers>
+                </footer>
+              </div>
+              
+              {/* PWA Components */}
+              <PWAInstallPrompt />
+              <PWAServiceWorker />
+            </ToastProvider>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );
