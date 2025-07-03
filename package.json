@@ -25,7 +25,12 @@
     "clear-cache:bat": "scripts\\clear-cache.bat",
     "reset": "npm run clear-cache && npm run dev",
     "reset:win": "npm run clear-cache:win && npm run dev",
-    "reset:bat": "npm run clear-cache:bat && npm run dev"
+    "reset:bat": "npm run clear-cache:bat && npm run dev",
+    "deploy:vercel": "vercel --prod",
+    "deploy:build": "npm run build && npm run start",
+    "db:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.11.0",
