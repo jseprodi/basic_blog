@@ -146,11 +146,7 @@ const nextConfig: NextConfig = {
   // Redirects for better SEO
   async redirects() {
     return [
-      {
-        source: '/dashboard',
-        destination: '/dashboard/',
-        permanent: true,
-      },
+      // Removed dashboard redirect to prevent redirect loop
     ];
   },
 

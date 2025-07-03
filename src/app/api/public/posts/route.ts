@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/generated/prisma';
 import { validateQueryParams, searchSchema } from '@/lib/validation';
-
-const prisma = new PrismaClient();
+import { database } from '@/lib/database';
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,20 +62,9 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const posts = await prisma.post.findMany({
-      where: whereClause,
-      include: {
-        author: {
-          select: {
-            name: true,
-          },
-        },
-        category: true,
-        tags: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    const posts = await database.searchPosts(search || '', {
+      published: true,
+      limit: 50,
     });
 
     return NextResponse.json(posts);

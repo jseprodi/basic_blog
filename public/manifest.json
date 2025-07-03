@@ -1,103 +1,66 @@
 {
-  "name": "Next.js Blog",
+  "name": "Your Blog",
   "short_name": "Blog",
   "description": "A modern blog built with Next.js",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
-  "orientation": "portrait-primary",
+  "theme_color": "#000000",
+  "orientation": "portrait",
   "scope": "/",
   "lang": "en",
-  "categories": ["blog", "news", "social"],
+  "categories": ["news", "blog"],
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
+      "src": "/icons/icon-72x72.svg",
       "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-96x96.png",
+      "src": "/icons/icon-96x96.svg",
       "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icons/icon-192x192.svg",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icons/icon-512x512.svg",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "Access the blog dashboard",
-      "url": "/dashboard",
+      "name": "Latest Posts",
+      "short_name": "Posts",
+      "description": "View the latest blog posts",
+      "url": "/",
       "icons": [
         {
-          "src": "/icons/dashboard-96x96.png",
+          "src": "/icons/icon-96x96.svg",
           "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "New Post",
-      "short_name": "New Post",
-      "description": "Create a new blog post",
-      "url": "/dashboard/new",
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Manage your blog content",
+      "url": "/dashboard",
       "icons": [
         {
-          "src": "/icons/new-post-96x96.png",
+          "src": "/icons/icon-96x96.svg",
           "sizes": "96x96"
         }
       ]
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/screenshots/mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ]
+  "screenshots": []
 } 

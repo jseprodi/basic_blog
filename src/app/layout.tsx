@@ -7,25 +7,26 @@ import ToastProvider from "@/components/ToastProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import PWAServiceWorker from "@/components/PWAServiceWorker";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { config } from "@/config/app";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "My Blog - Thoughts, Ideas, and Stories",
-    template: "%s | My Blog"
+    default: `${config.site.name} - ${config.site.description}`,
+    template: `%s | ${config.site.name}`
   },
-  description: "A personal blog sharing thoughts, ideas, and stories about technology, life, and everything in between.",
+  description: config.site.description,
   keywords: ["blog", "personal", "technology", "thoughts", "ideas"],
-  authors: [{ name: "Blog Author" }],
-  creator: "Blog Author",
-  publisher: "Blog Author",
+  authors: [{ name: config.site.author }],
+  creator: config.site.author,
+  publisher: config.site.author,
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
+  metadataBase: new URL(config.site.url),
   alternates: {
     canonical: "/",
   },
@@ -33,14 +34,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "/",
-    title: "My Blog - Thoughts, Ideas, and Stories",
-    description: "A personal blog sharing thoughts, ideas, and stories about technology, life, and everything in between.",
-    siteName: "My Blog",
+    title: `${config.site.name} - ${config.site.description}`,
+    description: config.site.description,
+    siteName: config.site.name,
   },
   twitter: {
     card: "summary_large_image",
-    title: "My Blog - Thoughts, Ideas, and Stories",
-    description: "A personal blog sharing thoughts, ideas, and stories about technology, life, and everything in between.",
+    title: `${config.site.name} - ${config.site.description}`,
+    description: config.site.description,
   },
   robots: {
     index: true,
@@ -71,10 +72,10 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#3b82f6" />
+        <meta name="theme-color" content={config.pwa.themeColor} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="My Blog" />
+        <meta name="apple-mobile-web-app-title" content={config.pwa.name} />
         <meta name="mobile-web-app-capable" content="yes" />
         
         {/* Preconnect to external domains for performance */}
@@ -88,16 +89,16 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Blog",
-              "name": "My Blog",
-              "description": "A personal blog sharing thoughts, ideas, and stories about technology, life, and everything in between.",
-              "url": process.env.NEXTAUTH_URL || "http://localhost:3000",
+              "name": config.site.name,
+              "description": config.site.description,
+              "url": config.site.url,
               "publisher": {
                 "@type": "Person",
-                "name": "Blog Author"
+                "name": config.site.author
               },
               "mainEntityOfPage": {
                 "@type": "WebPage",
-                "@id": process.env.NEXTAUTH_URL || "http://localhost:3000"
+                "@id": config.site.url
               }
             })
           }}
@@ -106,30 +107,28 @@ export default function RootLayout({
       <body className={`${inter.className} h-full`}>
         <ErrorBoundary>
           <Providers>
-            <ToastProvider>
-              <div className="min-h-full flex flex-col">
-                <Header />
-                <main className="flex-1">
-                  {children}
-                </main>
-                <footer className="bg-gray-900 text-white py-8">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center">
-                      <p className="text-gray-400">
-                        © {new Date().getFullYear()} My Blog. All rights reserved.
-                      </p>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Built with Next.js, TypeScript, and Tailwind CSS
-                      </p>
-                    </div>
+            <div className="min-h-full flex flex-col">
+              <Header />
+              <main className="flex-1 relative z-10">
+                {children}
+              </main>
+              <footer className="bg-gray-900 text-white py-8 relative z-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center">
+                    <p className="text-gray-400">
+                      © 2025 {config.site.name}. All rights reserved.
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Built with Next.js, TypeScript, and Tailwind CSS
+                    </p>
                   </div>
-                </footer>
-              </div>
-              
-              {/* PWA Components */}
-              <PWAInstallPrompt />
-              <PWAServiceWorker />
-            </ToastProvider>
+                </div>
+              </footer>
+            </div>
+            
+            {/* PWA Components - Temporarily disabled */}
+            {/* <PWAInstallPrompt /> */}
+            {/* <PWAServiceWorker /> */}
           </Providers>
         </ErrorBoundary>
       </body>

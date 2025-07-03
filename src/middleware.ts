@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { config as appConfig } from '@/config/app';
 
 // Rate limiting store (in production, use Redis or similar)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 // Rate limiting configuration
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 100; // requests per window
-const RATE_LIMIT_MAX_AUTH_REQUESTS = 10; // auth requests per window
-const RATE_LIMIT_MAX_UPLOAD_REQUESTS = 5; // upload requests per window
+const RATE_LIMIT_WINDOW = appConfig.rateLimit.windowMs; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = appConfig.rateLimit.maxRequests; // 100 requests per minute
+const AUTH_RATE_LIMIT_MAX_REQUESTS = 200; // Higher limit for auth endpoints
+
+// Content Security Policy
+const CSP_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.sentry-cdn.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://api.sentry.io https://js.sentry-cdn.com",
+  "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests"
+].join('; ');
 
 // Security headers configuration
 const securityHeaders = {
@@ -21,18 +37,8 @@ const securityHeaders = {
   'X-Permitted-Cross-Domain-Policies': 'none',
   'X-Robots-Tag': 'noindex, nofollow',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-  'Content-Security-Policy': [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://www.google-analytics.com",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "upgrade-insecure-requests"
-  ].join('; '),
+  'Content-Security-Policy': CSP_POLICY,
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 };
 
 // Rate limiting function
@@ -91,7 +97,7 @@ function validateUploadRequest(request: NextRequest): boolean {
 
 // CORS configuration
 const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.NEXTAUTH_URL || 'http://localhost:3000',
+  'Access-Control-Allow-Origin': appConfig.site.url,
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Credentials': 'true',
@@ -100,25 +106,17 @@ const corsHeaders = {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Handle preflight requests
-  if (request.method === 'OPTIONS') {
-    return new NextResponse(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+  // Skip middleware for static files
+  if (pathname.startsWith('/_next/') || 
+      pathname.startsWith('/icons/') || 
+      pathname.startsWith('/uploads/') ||
+      pathname.includes('.')) {
+    return NextResponse.next();
   }
 
-  // Apply CORS headers to API routes
-  if (pathname.startsWith('/api/')) {
-    const response = NextResponse.next();
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      response.headers.set(key, value);
-    });
-    return response;
-  }
-
-  // Apply security headers to all responses
   const response = NextResponse.next();
+
+  // Add security headers
   Object.entries(securityHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
@@ -128,7 +126,8 @@ export async function middleware(request: NextRequest) {
   
   // Stricter rate limiting for authentication endpoints
   if (pathname.startsWith('/api/auth/')) {
-    if (!checkRateLimit(`${clientId}-auth`, RATE_LIMIT_MAX_AUTH_REQUESTS)) {
+    if (!checkRateLimit(`${clientId}-auth`, AUTH_RATE_LIMIT_MAX_REQUESTS)) {
+      console.warn('Rate limit exceeded for auth endpoint:', { clientId, pathname });
       return new NextResponse(
         JSON.stringify({ error: 'Too many authentication requests. Please try again later.' }),
         { status: 429, headers: { 'Content-Type': 'application/json' } }
@@ -138,7 +137,7 @@ export async function middleware(request: NextRequest) {
 
   // Rate limiting for upload endpoints
   if (pathname.startsWith('/api/upload')) {
-    if (!checkRateLimit(`${clientId}-upload`, RATE_LIMIT_MAX_UPLOAD_REQUESTS)) {
+    if (!checkRateLimit(`${clientId}-upload`, RATE_LIMIT_MAX_REQUESTS)) {
       return new NextResponse(
         JSON.stringify({ error: 'Too many upload requests. Please try again later.' }),
         { status: 429, headers: { 'Content-Type': 'application/json' } }
@@ -216,6 +215,23 @@ export async function middleware(request: NextRequest) {
     );
   }
 
+  // Add caching headers for public API routes
+  if (pathname.startsWith('/api/public/')) {
+    response.headers.set('Cache-Control', `public, max-age=${appConfig.cache.maxAge}, stale-while-revalidate=${appConfig.cache.staleWhileRevalidate}`);
+    response.headers.set('Vary', 'Accept-Encoding');
+  }
+
+  // Add caching headers for static content
+  if (pathname.startsWith('/post/') || pathname === '/') {
+    response.headers.set('Cache-Control', `public, max-age=${appConfig.cache.maxAge}, stale-while-revalidate=${appConfig.cache.staleWhileRevalidate}`);
+  }
+
+  // Add canonical URL for pages
+  if (pathname.startsWith('/post/') || pathname === '/') {
+    const canonicalUrl = `${appConfig.site.url}${pathname}`;
+    response.headers.set('Link', `<${canonicalUrl}>; rel="canonical"`);
+  }
+
   return response;
 }
 
@@ -226,8 +242,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }; 

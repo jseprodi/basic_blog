@@ -1,6 +1,6 @@
-const CACHE_NAME = 'blog-cache-v2';
-const DYNAMIC_CACHE_NAME = 'blog-dynamic-v2';
-const STATIC_CACHE_NAME = 'blog-static-v2';
+const CACHE_NAME = 'blog-cache-v3';
+const DYNAMIC_CACHE_NAME = 'blog-dynamic-v3';
+const STATIC_CACHE_NAME = 'blog-static-v3';
 
 // Static assets to cache immediately
 const STATIC_ASSETS = [
@@ -41,6 +41,9 @@ const CACHE_STRATEGIES = {
   CACHE_ONLY: 'cache-only',
 };
 
+// Background sync queue
+let backgroundSyncQueue = [];
+
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
@@ -68,9 +71,65 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      // Claim all clients immediately
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
+});
+
+// Push notification event
+self.addEventListener('push', (event) => {
+  console.log('Push notification received:', event);
+  
+  const options = {
+    body: event.data ? event.data.text() : 'New content available!',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: 1
+    },
+    actions: [
+      {
+        action: 'explore',
+        title: 'View',
+        icon: '/icons/icon-72x72.png'
+      },
+      {
+        action: 'close',
+        title: 'Close',
+        icon: '/icons/icon-72x72.png'
+      }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification('Blog Update', options)
+  );
+});
+
+// Notification click event
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event);
+  
+  event.notification.close();
+
+  if (event.action === 'explore') {
+    event.waitUntil(
+      clients.openWindow('/')
+    );
+  }
+});
+
+// Background sync event
+self.addEventListener('sync', (event) => {
+  console.log('Background sync triggered:', event.tag);
+  
+  if (event.tag === 'background-sync') {
+    event.waitUntil(doBackgroundSync());
+  }
 });
 
 // Fetch event - handle different caching strategies
@@ -206,6 +265,8 @@ async function handleDefaultRequest(request) {
   try {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
+      cache.put(request, networkResponse.clone());
       return networkResponse;
     }
   } catch (error) {
@@ -220,94 +281,56 @@ async function handleDefaultRequest(request) {
   return caches.match('/offline');
 }
 
-// Helper function to check if URL is a static asset
+// Check if pathname is a static asset
 function isStaticAsset(pathname) {
-  return pathname.startsWith('/icons/') ||
-         pathname.startsWith('/uploads/') ||
-         pathname.endsWith('.svg') ||
-         pathname.endsWith('.png') ||
-         pathname.endsWith('.jpg') ||
-         pathname.endsWith('.jpeg') ||
-         pathname.endsWith('.gif') ||
-         pathname.endsWith('.webp') ||
-         pathname.endsWith('.ico') ||
-         pathname.endsWith('.css') ||
-         pathname.endsWith('.js');
+  const staticExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'];
+  return staticExtensions.some(ext => pathname.endsWith(ext)) || 
+         pathname.startsWith('/icons/') || 
+         pathname.startsWith('/_next/');
 }
 
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'background-sync') {
-    event.waitUntil(doBackgroundSync());
-  }
-});
-
+// Background sync function
 async function doBackgroundSync() {
+  console.log('Performing background sync...');
+  
   try {
-    // Sync any pending offline actions
-    console.log('Performing background sync...');
-    
-    // Example: Sync offline comments, drafts, etc.
+    // Sync any pending data
     const offlineData = await getOfflineData();
     if (offlineData.length > 0) {
       await syncOfflineData(offlineData);
+    }
+    
+    // Check for new content
+    const response = await fetch('/api/public/posts?limit=1');
+    if (response.ok) {
+      const posts = await response.json();
+      if (posts.length > 0) {
+        // Show notification for new content
+        self.registration.showNotification('New Blog Post', {
+          body: `Check out the latest post: ${posts[0].title}`,
+          icon: '/icons/icon-192x192.png',
+          badge: '/icons/icon-72x72.png',
+          data: { url: `/post/${posts[0].id}` }
+        });
+      }
     }
   } catch (error) {
     console.error('Background sync failed:', error);
   }
 }
 
-// Helper functions for offline data management
+// Get offline data from IndexedDB
 async function getOfflineData() {
-  // Implementation for getting offline data
+  // This would be implemented with IndexedDB
+  // For now, return empty array
   return [];
 }
 
+// Sync offline data to server
 async function syncOfflineData(data) {
-  // Implementation for syncing offline data
+  // This would sync any offline actions (comments, etc.)
   console.log('Syncing offline data:', data);
 }
-
-// Push notification handler
-self.addEventListener('push', (event) => {
-  const options = {
-    body: event.data ? event.data.text() : 'New blog post available!',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1,
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'View Post',
-        icon: '/icons/icon-192x192.png',
-      },
-      {
-        action: 'close',
-        title: 'Close',
-        icon: '/icons/icon-192x192.png',
-      },
-    ],
-  };
-
-  event.waitUntil(
-    self.registration.showNotification('Blog Update', options)
-  );
-});
-
-// Notification click handler
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  if (event.action === 'explore') {
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
-});
 
 // Message handler for communication with main thread
 self.addEventListener('message', (event) => {

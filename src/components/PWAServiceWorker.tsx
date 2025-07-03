@@ -9,8 +9,32 @@ export default function PWAServiceWorker() {
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
+    // Aggressively clear all service workers and caches
     if ('serviceWorker' in navigator) {
-      registerServiceWorker();
+      // Unregister all service workers
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          console.log('Unregistering service worker:', registration);
+          registration.unregister();
+        });
+      });
+
+      // Clear all caches
+      if ('caches' in window) {
+        caches.keys().then((cacheNames) => {
+          cacheNames.forEach((cacheName) => {
+            console.log('Deleting cache:', cacheName);
+            caches.delete(cacheName);
+          });
+        });
+      }
+
+      // Force reload to clear any remaining cached content
+      setTimeout(() => {
+        if (window.location.pathname.includes('/offline')) {
+          window.location.href = '/';
+        }
+      }, 1000);
     }
   }, []);
 

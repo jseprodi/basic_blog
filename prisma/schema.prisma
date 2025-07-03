@@ -21,6 +21,12 @@ model User {
   name     String
   posts    Post[]
   comments Comment[]
+  pushSubscriptions PushSubscription[]
+  emailSubscriptions EmailSubscription[]
+  analyticsEvents AnalyticsEvent[]
+  moderationLogs ModerationLog[]
+
+  @@index([email])
 }
 
 model Category {
@@ -44,6 +50,9 @@ model Post {
   excerpt     String?
   featuredImage String?
   published   Boolean    @default(false)
+  status      String     @default("draft") // draft, scheduled, published
+  scheduledFor DateTime?
+  publishedAt DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   authorId    Int
@@ -52,6 +61,12 @@ model Post {
   category    Category?  @relation(fields: [categoryId], references: [id])
   tags        Tag[]
   comments    Comment[]
+
+  @@index([published, createdAt])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@index([status, scheduledFor])
 }
 
 model Comment {
@@ -65,4 +80,93 @@ model Comment {
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    Int?
   user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([postId, approved])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+// Analytics Events
+model AnalyticsEvent {
+  id        Int      @id @default(autoincrement())
+  type      String   // 'event', 'pageview', 'error'
+  data      String   // JSON string of event data
+  timestamp DateTime @default(now())
+  sessionId String
+  userAgent String?
+  ip        String?
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([type, timestamp])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([timestamp])
+}
+
+// Web Vitals
+model WebVitals {
+  id        Int      @id @default(autoincrement())
+  name      String   // CLS, FID, FCP, LCP, TTFB
+  value     Float
+  rating    String   // good, needs-improvement, poor
+  delta     Float
+  eventId   String
+  timestamp DateTime @default(now())
+  sessionId String
+  userAgent String?
+  url       String?
+
+  @@index([name, rating])
+  @@index([timestamp])
+  @@index([sessionId])
+}
+
+// Push Notification Subscriptions
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Email Subscriptions
+model EmailSubscription {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  subscribed Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([userId])
+  @@index([subscribed])
+}
+
+// Content Moderation Logs
+model ModerationLog {
+  id        Int      @id @default(autoincrement())
+  contentType String // 'comment', 'post'
+  contentId  Int
+  content    String
+  flags      String  // JSON array of flags
+  confidence Float
+  approved   Boolean
+  moderatedBy Int?
+  user      User?    @relation(fields: [moderatedBy], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([contentType, contentId])
+  @@index([approved])
+  @@index([createdAt])
 }

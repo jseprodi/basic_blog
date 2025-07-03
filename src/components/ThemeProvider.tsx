@@ -46,14 +46,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(newTheme);
   };
 
-  // Prevent hydration mismatch
-  if (!mounted) {
-    return <div className="light">{children}</div>;
-  }
-
+  // Always render the same structure to prevent hydration mismatch
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
-      {children}
+      <div className={mounted ? theme : 'light'}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }

@@ -10,6 +10,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "setup": "node scripts/setup.js",
     "type-check": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -18,7 +19,13 @@
     "db:seed": "tsx prisma/seed.ts",
     "analyze": "cross-env ANALYZE=true npm run build",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "clear-cache": "node scripts/clear-cache.js",
+    "clear-cache:win": "powershell -ExecutionPolicy Bypass -File scripts/clear-cache.ps1",
+    "clear-cache:bat": "scripts\\clear-cache.bat",
+    "reset": "npm run clear-cache && npm run dev",
+    "reset:win": "npm run clear-cache:win && npm run dev",
+    "reset:bat": "npm run clear-cache:bat && npm run dev"
   },
   "dependencies": {
     "@prisma/client": "^6.11.0",
@@ -35,6 +42,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-quill": "^2.0.0",
+    "web-vitals": "^5.0.3",
     "zod": "^3.25.69"
   },
   "devDependencies": {
