@@ -1,30 +1,25 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String
-  name     String
-  posts    Post[]
-  comments Comment[]
-  pushSubscriptions PushSubscription[]
+  id                 Int                 @id @default(autoincrement())
+  email              String              @unique
+  password           String
+  name               String
+  analyticsEvents    AnalyticsEvent[]
+  comments           Comment[]
   emailSubscriptions EmailSubscription[]
-  analyticsEvents AnalyticsEvent[]
-  moderationLogs ModerationLog[]
+  moderationLogs     ModerationLog[]
+  posts              Post[]
+  pushSubscriptions  PushSubscription[]
 
   @@index([email])
 }
@@ -40,27 +35,27 @@ model Tag {
   id    Int    @id @default(autoincrement())
   name  String @unique
   slug  String @unique
-  posts Post[]
+  posts Post[] @relation("PostToTag")
 }
 
 model Post {
-  id          Int        @id @default(autoincrement())
-  title       String
-  content     String
-  excerpt     String?
+  id            Int       @id @default(autoincrement())
+  title         String
+  content       String
+  excerpt       String?
   featuredImage String?
-  published   Boolean    @default(false)
-  status      String     @default("draft") // draft, scheduled, published
-  scheduledFor DateTime?
-  publishedAt DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  authorId    Int
-  author      User       @relation(fields: [authorId], references: [id])
-  categoryId  Int?
-  category    Category?  @relation(fields: [categoryId], references: [id])
-  tags        Tag[]
-  comments    Comment[]
+  published     Boolean   @default(false)
+  status        String    @default("draft")
+  scheduledFor  DateTime?
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  authorId      Int
+  categoryId    Int?
+  comments      Comment[]
+  author        User      @relation(fields: [authorId], references: [id])
+  category      Category? @relation(fields: [categoryId], references: [id])
+  tags          Tag[]     @relation("PostToTag")
 
   @@index([published, createdAt])
   @@index([authorId])
@@ -70,27 +65,26 @@ model Post {
 }
 
 model Comment {
-  id        Int      @id @default(autoincrement())
-  content   String
-  authorName String
+  id          Int      @id @default(autoincrement())
+  content     String
+  authorName  String
   authorEmail String
-  approved  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  postId    Int
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  userId    Int?
-  user      User?    @relation(fields: [userId], references: [id])
+  approved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  postId      Int
+  userId      Int?
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id])
 
   @@index([postId, approved])
   @@index([createdAt])
   @@index([userId])
 }
 
-// Analytics Events
 model AnalyticsEvent {
   id        Int      @id @default(autoincrement())
-  type      String   // 'event', 'pageview', 'error'
-  data      String   // JSON string of event data
+  type      String
+  data      String
   timestamp DateTime @default(now())
   sessionId String
   userAgent String?
@@ -104,12 +98,11 @@ model AnalyticsEvent {
   @@index([timestamp])
 }
 
-// Web Vitals
 model WebVitals {
   id        Int      @id @default(autoincrement())
-  name      String   // CLS, FID, FCP, LCP, TTFB
+  name      String
   value     Float
-  rating    String   // good, needs-improvement, poor
+  rating    String
   delta     Float
   eventId   String
   timestamp DateTime @default(now())
@@ -122,49 +115,46 @@ model WebVitals {
   @@index([sessionId])
 }
 
-// Push Notification Subscriptions
 model PushSubscription {
   id        Int      @id @default(autoincrement())
   endpoint  String   @unique
   p256dh    String
   auth      String
   userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
 }
 
-// Email Subscriptions
 model EmailSubscription {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  userId    Int?
-  user      User?    @relation(fields: [userId], references: [id])
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  name       String?
+  userId     Int?
   subscribed Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User?    @relation(fields: [userId], references: [id])
 
   @@index([email])
   @@index([userId])
   @@index([subscribed])
 }
 
-// Content Moderation Logs
 model ModerationLog {
-  id        Int      @id @default(autoincrement())
-  contentType String // 'comment', 'post'
-  contentId  Int
-  content    String
-  flags      String  // JSON array of flags
-  confidence Float
-  approved   Boolean
+  id          Int      @id @default(autoincrement())
+  contentType String
+  contentId   Int
+  content     String
+  flags       String
+  confidence  Float
+  approved    Boolean
   moderatedBy Int?
-  user      User?    @relation(fields: [moderatedBy], references: [id])
-  createdAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [moderatedBy], references: [id])
 
   @@index([contentType, contentId])
   @@index([approved])
