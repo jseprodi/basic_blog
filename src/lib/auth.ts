@@ -22,16 +22,22 @@ export const authOptions = {
             return null;
           }
           
+          console.log('Auth: Looking up user with email:', credentials.email);
           const user = await prisma.user.findUnique({
             where: { email: credentials.email },
           });
+          
+          console.log('Auth: User lookup result:', user ? { id: user.id, email: user.email, name: user.name } : 'null');
           
           if (!user) {
             console.log('Auth: User not found');
             return null;
           }
           
+          console.log('Auth: Comparing passwords...');
           const isValid = await bcrypt.compare(credentials.password, user.password);
+          console.log('Auth: Password comparison result:', isValid);
+          
           if (!isValid) {
             console.log('Auth: Invalid password');
             return null;
