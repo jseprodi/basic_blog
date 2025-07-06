@@ -7,34 +7,14 @@ export default function PWAServiceWorker() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Aggressively clear all service workers and caches
+    setIsClient(true);
+    
+    // Register service worker if not already registered
     if ('serviceWorker' in navigator) {
-      // Unregister all service workers
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => {
-          console.log('Unregistering service worker:', registration);
-          registration.unregister();
-        });
-      });
-
-      // Clear all caches
-      if ('caches' in window) {
-        caches.keys().then((cacheNames) => {
-          cacheNames.forEach((cacheName) => {
-            console.log('Deleting cache:', cacheName);
-            caches.delete(cacheName);
-          });
-        });
-      }
-
-      // Force reload to clear any remaining cached content
-      setTimeout(() => {
-        if (window.location.pathname.includes('/offline')) {
-          window.location.href = '/';
-        }
-      }, 1000);
+      registerServiceWorker();
     }
   }, []);
 
@@ -89,7 +69,7 @@ export default function PWAServiceWorker() {
     setUpdateAvailable(false);
   };
 
-  if (!updateAvailable) {
+  if (!isClient || !updateAvailable) {
     return null;
   }
 

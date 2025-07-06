@@ -16,8 +16,11 @@ export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+    
     // Check if app is already installed
     if (window.matchMedia('(display-mode: standalone)').matches || 
         (window.navigator as any).standalone === true) {
@@ -67,7 +70,7 @@ export default function PWAInstallPrompt() {
     setDeferredPrompt(null);
   };
 
-  if (isInstalled || !showPrompt) {
+  if (!isClient || isInstalled || !showPrompt) {
     return null;
   }
 

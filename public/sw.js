@@ -7,8 +7,8 @@ const STATIC_ASSETS = [
   '/',
   '/offline',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/icons/icon-192x192.svg',
+  '/icons/icon-512x512.svg',
   '/vercel.svg',
   '/next.svg',
 ];
@@ -27,6 +27,16 @@ const API_ROUTES = [
   '/api/public/posts',
   '/api/categories',
   '/api/tags',
+];
+
+// Authentication routes to exclude from caching
+const AUTH_ROUTES = [
+  '/api/auth',
+  '/api/auth/session',
+  '/api/auth/csrf',
+  '/api/auth/signin',
+  '/api/auth/signout',
+  '/api/auth/callback',
 ];
 
 // Cache strategies
@@ -84,8 +94,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: event.data ? event.data.text() : 'New content available!',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: '/icons/icon-192x192.svg',
+    badge: '/icons/icon-72x72.svg',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
@@ -142,6 +152,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip authentication routes - let them go directly to network
+  if (AUTH_ROUTES.some(route => url.pathname.startsWith(route))) {
+    return;
+  }
+
   // Handle different types of requests
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(handleApiRequest(request));
@@ -158,6 +173,13 @@ self.addEventListener('fetch', (event) => {
 
 // API request handler - Network first with cache fallback
 async function handleApiRequest(request) {
+  const url = new URL(request.url);
+  
+  // Don't cache certain API routes
+  if (!shouldCacheRoute(url.pathname)) {
+    return fetch(request);
+  }
+  
   try {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
@@ -180,21 +202,15 @@ async function handleApiRequest(request) {
   });
 }
 
-// Dashboard request handler - Cache first for better performance
+// Dashboard request handler - Network first for authentication safety
 async function handleDashboardRequest(request) {
-  const cachedResponse = await caches.match(request);
-  if (cachedResponse) {
-    // Update cache in background
-    fetch(request).then((response) => {
-      if (response.ok) {
-        caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
-          cache.put(request, response);
-        });
-      }
-    });
-    return cachedResponse;
+  const url = new URL(request.url);
+  
+  // Don't cache dashboard routes that might contain sensitive data
+  if (!shouldCacheRoute(url.pathname)) {
+    return fetch(request);
   }
-
+  
   try {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
@@ -204,6 +220,11 @@ async function handleDashboardRequest(request) {
     }
   } catch (error) {
     console.log('Network failed for dashboard request:', request.url);
+  }
+
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
   }
 
   return caches.match('/offline');
@@ -289,6 +310,21 @@ function isStaticAsset(pathname) {
          pathname.startsWith('/_next/');
 }
 
+// Check if a route should be cached
+function shouldCacheRoute(pathname) {
+  // Don't cache authentication routes
+  if (AUTH_ROUTES.some(route => pathname.startsWith(route))) {
+    return false;
+  }
+  
+  // Don't cache dynamic API routes that might contain sensitive data
+  if (pathname.startsWith('/api/posts/') && pathname.includes('/edit')) {
+    return false;
+  }
+  
+  return true;
+}
+
 // Background sync function
 async function doBackgroundSync() {
   console.log('Performing background sync...');
@@ -308,8 +344,8 @@ async function doBackgroundSync() {
         // Show notification for new content
         self.registration.showNotification('New Blog Post', {
           body: `Check out the latest post: ${posts[0].title}`,
-          icon: '/icons/icon-192x192.png',
-          badge: '/icons/icon-72x72.png',
+                  icon: '/icons/icon-192x192.svg',
+        badge: '/icons/icon-72x72.svg',
           data: { url: `/post/${posts[0].id}` }
         });
       }

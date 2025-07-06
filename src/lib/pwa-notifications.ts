@@ -150,8 +150,8 @@ class PWANotificationService {
     try {
       await this.registration.showNotification('Test Notification', {
         body: 'This is a test notification from your blog',
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
+        icon: '/icons/icon-192x192.svg',
+        badge: '/icons/icon-72x72.svg',
       });
     } catch (error) {
       console.error('Failed to send test notification:', error);

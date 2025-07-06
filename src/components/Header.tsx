@@ -117,7 +117,6 @@ export default function Header() {
       console.log('Header component re-rendered with dropdown positioning fixes - v10');
       console.log('Current timestamp:', new Date().toISOString());
       console.log('Dropdown positioning: dynamic fixed positioning applied');
-      console.log('Unique ID:', Math.random().toString(36).substr(2, 9));
       console.log('Dropdown position:', dropdownPosition);
     }
   }, [isMounted, status, session]);
@@ -142,21 +141,19 @@ export default function Header() {
               >
                 HOME
               </Link>
-              {session && (
-                <Link 
-                  href="/dashboard" 
-                  className="text-gray-300 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-mono tracking-wide transition-colors hover:bg-black/20"
-                >
-                  DASHBOARD
-                </Link>
-              )}
+              <Link 
+                href="/dashboard" 
+                className={`text-gray-300 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-mono tracking-wide transition-colors hover:bg-black/20 ${!session ? 'hidden' : ''}`}
+              >
+                DASHBOARD
+              </Link>
             </nav>
           </div>
 
           {/* Search and User Menu */}
           <div className="flex items-center space-x-4">
             {/* Theme Toggle */}
-            {isMounted && <ThemeToggle />}
+            <ThemeToggle />
 
             {/* Keyboard Shortcuts Help */}
             <button
@@ -208,10 +205,12 @@ export default function Header() {
             </div>
 
             {/* User Menu */}
-            {status === 'loading' ? (
-              <div className="animate-pulse bg-gray-700 h-8 w-8 rounded-full"></div>
-            ) : session ? (
-              <div className="relative group">
+            <div className="flex items-center space-x-2">
+              {/* Loading state - always rendered but conditionally visible */}
+              <div className={`animate-pulse bg-gray-700 h-8 w-8 rounded-full ${status === 'loading' ? '' : 'hidden'}`}></div>
+              
+              {/* User menu - always rendered but conditionally visible */}
+              <div className={`relative group ${status === 'loading' || !session ? 'hidden' : ''}`}>
                 <button 
                   data-user-menu-button
                   className="flex items-center space-x-2 text-gray-300 hover:text-yellow-500 transition-colors"
@@ -219,11 +218,11 @@ export default function Header() {
                 >
                   <div className="w-8 h-8 bg-gradient-to-br from-yellow-600 to-orange-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-mono font-bold">
-                      {isMounted ? (session.user?.name?.[0] || session.user?.email?.[0] || 'U') : 'U'}
+                      {session?.user?.name?.[0] || session?.user?.email?.[0] || 'U'}
                     </span>
                   </div>
                   <span className="hidden md:block text-sm font-mono font-medium">
-                    {isMounted ? (session.user?.name || session.user?.email) : 'User'}
+                    {session?.user?.name || session?.user?.email || 'User'}
                   </span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -254,14 +253,15 @@ export default function Header() {
                   </div>
                 </div>
               </div>
-            ) : (
+              
+              {/* Sign in link - always rendered but conditionally visible */}
               <Link
                 href="/login"
-                className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-black px-4 py-2 rounded-md text-sm font-mono font-bold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25"
+                className={`bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-black px-4 py-2 rounded-md text-sm font-mono font-bold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 ${status === 'loading' || session ? 'hidden' : ''}`}
               >
                 SIGN IN
               </Link>
-            )}
+            </div>
           </div>
         </div>
       </div>

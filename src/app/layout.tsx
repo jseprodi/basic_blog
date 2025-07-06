@@ -130,9 +130,9 @@ export default function RootLayout({
               </footer>
             </div>
             
-            {/* PWA Components - Temporarily disabled */}
-            {/* <PWAInstallPrompt /> */}
-            {/* <PWAServiceWorker /> */}
+            {/* PWA Components */}
+            <PWAInstallPrompt />
+            <PWAServiceWorker />
           </Providers>
         </ErrorBoundary>
       </body>
