@@ -16,6 +16,7 @@ export const authOptions = {
       },
       async authorize(credentials) {
         try {
+          console.log('Auth: Starting authorization with credentials:', { email: credentials?.email });
           if (!credentials?.email || !credentials?.password) {
             console.log('Auth: Missing credentials');
             return null;
@@ -106,5 +107,5 @@ export const authOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET || "your-secret-key-here",
-  debug: process.env.NODE_ENV === 'development',
+  debug: true, // Enable debug in production temporarily
 }; 
