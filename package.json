@@ -6,7 +6,6 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -30,7 +29,6 @@
     "deploy:vercel": "vercel --prod",
     "deploy:build": "npm run build && npm run start",
     "db:deploy": "prisma migrate deploy",
-    "db:generate": "prisma generate",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -38,6 +36,7 @@
     "@sentry/nextjs": "^9.34.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/multer": "^2.0.0",
+    "@vercel/blob": "^1.1.1",
     "bcryptjs": "^3.0.2",
     "isomorphic-dompurify": "^2.25.0",
     "lucide-react": "^0.525.0",

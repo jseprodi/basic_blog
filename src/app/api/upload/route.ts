@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { put } from '@vercel/blob';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,47 +42,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File size must be less than 5MB' }, { status: 400 });
     }
 
-    // Convert file to base64 for storage
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Data = buffer.toString('base64');
-    
     // Generate unique filename
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const extension = file.name.split('.').pop();
-    const filename = `${file.name.split('.')[0]}-${timestamp}-${randomString}.${extension}`;
+    const filename = `uploads/${file.name.split('.')[0]}-${timestamp}-${randomString}.${extension}`;
     
     console.log('Upload API: Generated filename:', filename);
 
-    // For now, we'll store the image data in a simple way
-    // In production, you should use a proper cloud storage service like AWS S3, Cloudinary, etc.
-    const imageData = {
-      filename: filename,
-      data: base64Data,
-      type: file.type,
-      size: file.size,
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: session.user.email
-    };
+    try {
+      // Convert file to buffer
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      
+      // Upload to Vercel Blob Storage
+      console.log('Upload API: Uploading to Vercel Blob Storage...');
+      const { url } = await put(filename, buffer, { 
+        access: 'public',
+        contentType: file.type
+      });
+      
+      console.log('Upload API: Upload successful, blob URL:', url);
 
-    // Store in memory (temporary solution - not recommended for production)
-    // In production, use a database or cloud storage
-    console.log('Upload API: Image processed successfully');
+      return NextResponse.json({
+        success: true,
+        url: url,
+        filename: filename,
+        size: file.size,
+        type: file.type,
+        message: 'Image uploaded successfully to Vercel Blob Storage'
+      });
 
-    // Return a temporary URL (in production, this would be a real cloud storage URL)
-    const tempUrl = `/api/images/${filename}`;
-    
-    console.log('Upload API: Returning success with URL:', tempUrl);
-
-    return NextResponse.json({
-      success: true,
-      url: tempUrl,
-      filename: filename,
-      size: file.size,
-      type: file.type,
-      message: 'Image uploaded successfully (temporary storage)'
-    });
+    } catch (blobError) {
+      console.error('Upload API: Blob storage error:', blobError);
+      return NextResponse.json({ 
+        error: 'Failed to upload image to storage',
+        details: blobError instanceof Error ? blobError.message : 'Unknown error'
+      }, { status: 500 });
+    }
 
   } catch (error) {
     console.error('Upload API: Error uploading image:', error);
@@ -102,13 +100,13 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // For now, return empty array since we're not storing images persistently
-    // In production, this would fetch from a database or cloud storage
-    console.log('Upload API: Returning empty images list (no persistent storage)');
+    // For now, return empty array since we need to implement listing from Blob Storage
+    // In production, you might want to store image metadata in the database
+    console.log('Upload API: Returning empty images list (blob storage listing not implemented)');
     
     return NextResponse.json({ 
       images: [],
-      message: 'No persistent storage configured. Images are temporarily stored only.'
+      message: 'Image listing from Blob Storage not yet implemented. Images are stored in Vercel Blob Storage.'
     });
   } catch (error) {
     console.error('Upload API: Error fetching images:', error);
@@ -130,12 +128,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
     }
 
-    // For now, just return success since we're not storing images persistently
+    // For now, just return success since we need to implement deletion from Blob Storage
     console.log('Upload API: Delete requested for:', filename);
     
     return NextResponse.json({ 
       success: true, 
-      message: 'Image deleted successfully (temporary storage)' 
+      message: 'Image deletion from Blob Storage not yet implemented'
     });
   } catch (error) {
     console.error('Upload API: Error deleting image:', error);

@@ -20,17 +20,18 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message: 'Upload functionality is working correctly (serverless-compatible)',
+      message: 'Upload functionality is working correctly with Vercel Blob Storage',
       environment: 'Vercel Serverless',
-      storage: 'Temporary (base64)',
+      storage: 'Vercel Blob Storage',
       session: {
         user: session.user.email,
         authenticated: true
       },
       notes: [
-        'Images are temporarily stored in base64 format',
-        'For production, implement cloud storage (AWS S3, Cloudinary, etc.)',
-        'Current implementation is for testing purposes only'
+        'Images are stored in Vercel Blob Storage',
+        'Images are publicly accessible via blob URLs',
+        'File listing and deletion features can be added later',
+        'Blob storage provides persistent, scalable storage'
       ]
     });
 
