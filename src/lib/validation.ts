@@ -30,7 +30,7 @@ export const createPostSchema = z.object({
   title: titleSchema,
   content: contentSchema,
   excerpt: z.string().max(500, 'Excerpt too long').optional(),
-  featuredImage: z.string().url('Invalid image URL').optional(),
+  featuredImage: z.string().url('Invalid image URL').optional().or(z.literal('')),
   published: z.boolean().default(false),
   categoryId: z.number().int().positive().optional(),
   tagIds: z.array(z.number().int().positive()).default([]),

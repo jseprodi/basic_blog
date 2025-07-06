@@ -50,7 +50,7 @@ export default function NewPostPage() {
       title: validationRules.title,
       content: validationRules.content,
       excerpt: validationRules.excerpt,
-      featuredImage: featuredImage ? validationRules.url : {}
+      featuredImage: featuredImage && featuredImage.trim() ? validationRules.url : {}
     });
 
     if (!validation.isValid) {

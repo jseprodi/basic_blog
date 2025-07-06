@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         title,
         content: sanitizedContent,
         excerpt: sanitizedExcerpt,
-        featuredImage,
+        featuredImage: featuredImage && featuredImage.trim() ? featuredImage : null,
         published,
         authorId: user.id,
         categoryId: categoryId || null,
