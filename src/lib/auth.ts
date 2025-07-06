@@ -16,27 +16,21 @@ export const authOptions = {
       },
       async authorize(credentials) {
         try {
-          console.log('Auth: Starting authorization with credentials:', { email: credentials?.email });
           if (!credentials?.email || !credentials?.password) {
             console.log('Auth: Missing credentials');
             return null;
           }
           
-          console.log('Auth: Looking up user with email:', credentials.email);
           const user = await prisma.user.findUnique({
             where: { email: credentials.email },
           });
-          
-          console.log('Auth: User lookup result:', user ? { id: user.id, email: user.email, name: user.name } : 'null');
           
           if (!user) {
             console.log('Auth: User not found');
             return null;
           }
           
-          console.log('Auth: Comparing passwords...');
           const isValid = await bcrypt.compare(credentials.password, user.password);
-          console.log('Auth: Password comparison result:', isValid);
           
           if (!isValid) {
             console.log('Auth: Invalid password');
@@ -113,5 +107,5 @@ export const authOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET || "your-secret-key-here",
-  debug: true, // Enable debug in production temporarily
+  debug: process.env.NODE_ENV === 'development',
 }; 
