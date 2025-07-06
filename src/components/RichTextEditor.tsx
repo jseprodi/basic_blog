@@ -138,10 +138,12 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         onBlur={updateToolbarState}
         onFocus={updateToolbarState}
         onPaste={handlePaste}
-        className="min-h-[200px] p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset text-gray-900"
+        className="rich-text-editor min-h-[200px] p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset text-gray-900 bg-white"
         style={{ 
           minHeight: '200px',
-          color: '#111827' // Dark gray for better visibility
+          color: '#111827', // Dark gray for better visibility
+          backgroundColor: '#ffffff', // Ensure white background
+          caretColor: '#111827' // Ensure cursor is visible
         }}
         data-placeholder={placeholder}
       />

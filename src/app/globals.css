@@ -119,6 +119,65 @@ body::after {
   -webkit-backdrop-filter: none !important;
 }
 
+/* Rich Text Editor Styles - Override dark theme */
+.rich-text-editor {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+.rich-text-editor * {
+  color: #111827 !important;
+}
+
+.rich-text-editor p {
+  color: #111827 !important;
+  background-color: transparent !important;
+}
+
+.rich-text-editor div {
+  color: #111827 !important;
+  background-color: transparent !important;
+}
+
+.rich-text-editor span {
+  color: #111827 !important;
+  background-color: transparent !important;
+}
+
+.rich-text-editor strong {
+  color: #111827 !important;
+  background-color: transparent !important;
+}
+
+.rich-text-editor em {
+  color: #111827 !important;
+  background-color: transparent !important;
+}
+
+.rich-text-editor u {
+  color: #111827 !important;
+  background-color: transparent !important;
+}
+
+.rich-text-editor ul, .rich-text-editor ol {
+  color: #111827 !important;
+  background-color: transparent !important;
+}
+
+.rich-text-editor li {
+  color: #111827 !important;
+  background-color: transparent !important;
+}
+
+.rich-text-editor a {
+  color: #2563eb !important;
+  background-color: transparent !important;
+}
+
+.rich-text-editor img {
+  background-color: transparent !important;
+}
+
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Times New Roman', serif;
