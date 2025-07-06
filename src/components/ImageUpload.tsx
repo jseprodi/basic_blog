@@ -57,7 +57,7 @@ export default function ImageUpload({ onImageUploaded, className = '' }: ImageUp
       if (response.ok) {
         const data = await response.json();
         console.log('ImageUpload: Upload successful, data:', data);
-        showSuccess('Image uploaded successfully!');
+        showSuccess(data.message || 'Image uploaded successfully!');
         onImageUploaded(data.url);
         
         // Refresh image library
