@@ -25,6 +25,12 @@ export default function ImageUpload({ onImageUploaded, className = '' }: ImageUp
   const { showSuccess, showError } = useToast();
 
   const uploadImage = useCallback(async (file: File) => {
+    console.log('ImageUpload: Starting upload for file:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
+    
     if (!file.type.startsWith('image/')) {
       showError('Please select an image file');
       return;
@@ -40,13 +46,17 @@ export default function ImageUpload({ onImageUploaded, className = '' }: ImageUp
     formData.append('image', file);
 
     try {
+      console.log('ImageUpload: Sending upload request...');
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('ImageUpload: Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('ImageUpload: Upload successful, data:', data);
         showSuccess('Image uploaded successfully!');
         onImageUploaded(data.url);
         
@@ -54,24 +64,42 @@ export default function ImageUpload({ onImageUploaded, className = '' }: ImageUp
         fetchUploadedImages();
       } else {
         const errorData = await response.json();
-        showError(errorData.error || 'Failed to upload image');
+        console.log('ImageUpload: Upload failed, error:', errorData);
+        
+        // Handle specific error cases
+        if (response.status === 401) {
+          showError('Please log in to upload images');
+        } else if (response.status === 400) {
+          showError(errorData.error || 'Invalid file format or size');
+        } else if (response.status === 500) {
+          showError('Server error. Please try again later.');
+        } else {
+          showError(errorData.error || 'Failed to upload image');
+        }
       }
     } catch (error) {
-      showError('An error occurred while uploading the image');
+      console.error('ImageUpload: Upload error:', error);
+      showError('Network error. Please check your connection and try again.');
     } finally {
       setIsUploading(false);
     }
   }, [onImageUploaded, showSuccess, showError]);
 
   const fetchUploadedImages = useCallback(async () => {
+    console.log('ImageUpload: Fetching uploaded images...');
     try {
       const response = await fetch('/api/upload');
+      console.log('ImageUpload: Fetch response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('ImageUpload: Fetched images data:', data);
         setUploadedImages(data.images || []);
+      } else {
+        console.log('ImageUpload: Fetch failed with status:', response.status);
       }
     } catch (error) {
-      console.error('Failed to fetch uploaded images:', error);
+      console.error('ImageUpload: Failed to fetch uploaded images:', error);
     }
   }, []);
 

@@ -16,6 +16,8 @@ export const authOptions = {
       },
       async authorize(credentials) {
         try {
+          console.log('Auth: Starting authorization...');
+          
           if (!credentials?.email || !credentials?.password) {
             console.log('Auth: Missing credentials');
             return null;
@@ -60,6 +62,8 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user, account }: { token: JWT; user?: any; account?: any }) {
       try {
+        console.log('JWT callback - input:', { token: token.sub, user: user?.email, account });
+        
         if (user) {
           console.log('JWT callback - user data:', { id: user.id, email: user.email, name: user.name });
           token.id = user.id;
@@ -72,7 +76,7 @@ export const authOptions = {
           token.id = token.sub;
         }
         
-        console.log('JWT callback - final token:', token);
+        console.log('JWT callback - final token:', { id: token.id, email: token.email, name: token.name });
         return token;
       } catch (error) {
         console.error('JWT callback error:', error);
@@ -81,8 +85,8 @@ export const authOptions = {
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       try {
-        console.log('Session callback - token:', token);
-        console.log('Session callback - session before:', session);
+        console.log('Session callback - token:', { id: token.id, email: token.email, name: token.name });
+        console.log('Session callback - session before:', { user: session.user?.email });
         
         if (token && session.user) {
           (session.user as any).id = token.id as string;
@@ -90,7 +94,7 @@ export const authOptions = {
           (session.user as any).name = token.name as string;
         }
         
-        console.log('Session callback - session after:', session);
+        console.log('Session callback - session after:', { user: session.user?.email, id: (session.user as any)?.id });
         return session;
       } catch (error) {
         console.error('Session callback error:', error);
