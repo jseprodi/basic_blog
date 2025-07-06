@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { put } from '@vercel/blob';
+import { put, list } from '@vercel/blob';
 
 export async function POST(request: NextRequest) {
   try {
@@ -100,14 +100,39 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // For now, return empty array since we need to implement listing from Blob Storage
-    // In production, you might want to store image metadata in the database
-    console.log('Upload API: Returning empty images list (blob storage listing not implemented)');
-    
-    return NextResponse.json({ 
-      images: [],
-      message: 'Image listing from Blob Storage not yet implemented. Images are stored in Vercel Blob Storage.'
-    });
+    try {
+      // List images from Vercel Blob Storage
+      console.log('Upload API: Listing images from Blob Storage...');
+      const { blobs } = await list({ 
+        prefix: 'uploads/',
+        limit: 100 
+      });
+      
+      console.log('Upload API: Found blobs:', blobs.length);
+      
+      const images = blobs
+        .filter(blob => /\.(jpg|jpeg|png|gif|webp)$/i.test(blob.pathname))
+        .map(blob => ({
+          filename: blob.pathname.split('/').pop() || blob.pathname,
+          url: blob.url,
+          uploadedAt: blob.uploadedAt,
+          size: blob.size
+        }));
+
+      console.log('Upload API: Returning images:', images.length);
+      return NextResponse.json({ 
+        images,
+        message: `Found ${images.length} images in Vercel Blob Storage`
+      });
+      
+    } catch (listError) {
+      console.error('Upload API: Error listing images:', listError);
+      return NextResponse.json({ 
+        images: [],
+        message: 'Failed to list images from Blob Storage',
+        error: listError instanceof Error ? listError.message : 'Unknown error'
+      });
+    }
   } catch (error) {
     console.error('Upload API: Error fetching images:', error);
     return NextResponse.json({ error: 'Failed to fetch images' }, { status: 500 });
