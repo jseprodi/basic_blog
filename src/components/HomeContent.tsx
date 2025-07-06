@@ -85,7 +85,7 @@ export default function HomeContent() {
           ) : (
             <div className="space-y-4">
               <p className="text-lg text-gray-300 font-mono">
-                ENTER THE VOID TO ACCESS YOUR BLOG.
+                WELCOME TO MY BLOG
               </p>
               <Link
                 href="/login"
