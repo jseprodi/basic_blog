@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './ThemeProvider';
 
+
 export default function Header() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
@@ -123,7 +124,7 @@ export default function Header() {
 
   return (
     <header className="bg-black/80 backdrop-blur-sm border-b border-gray-800 relative z-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Navigation */}
           <div className="flex items-center space-x-8">

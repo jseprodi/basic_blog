@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import Header from "@/components/Header";
+import SnowfallAnimation from "@/components/SnowfallAnimation";
 import ToastProvider from "@/components/ToastProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import PWAServiceWorker from "@/components/PWAServiceWorker";
@@ -109,6 +110,9 @@ export default function RootLayout({
           <Providers>
             <div className="min-h-full flex flex-col">
               <Header />
+              <div className="w-full border-b border-t border-slate-300 bg-gradient-to-b from-slate-50/80 to-slate-200/60 shadow-md relative overflow-hidden" style={{ zIndex: 0, height: "400px" }}>
+                <SnowfallAnimation />
+              </div>
               <main className="flex-1 relative z-10">
                 {children}
               </main>
