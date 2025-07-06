@@ -155,12 +155,19 @@ export default function HomeContent() {
                         {post.title.toUpperCase()}
                       </Link>
                     </h3>
-                    <p className="text-gray-300 mb-4 font-mono text-sm">
-                      {post.excerpt || (post.content.length > 200 
-                        ? `${post.content.substring(0, 200)}...` 
-                        : post.content
+                    <div className="text-gray-300 mb-4 font-mono text-sm">
+                      {post.excerpt ? (
+                        <p>{post.excerpt}</p>
+                      ) : (
+                        <div 
+                          dangerouslySetInnerHTML={{ 
+                            __html: post.content.length > 200 
+                              ? post.content.substring(0, 200) + '...' 
+                              : post.content 
+                          }}
+                        />
                       )}
-                    </p>
+                    </div>
                     <div className="flex flex-wrap items-center gap-2 mb-4" role="group" aria-label="Post categories and tags">
                       {post.category && (
                         <span className="bg-yellow-600/20 text-yellow-400 px-2 py-1 rounded-full text-xs font-mono font-medium border border-yellow-500/30" role="tag">
