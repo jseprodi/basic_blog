@@ -35,8 +35,14 @@ export default function NewPostPage() {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    
+    // Add a simple alert to confirm the function is being called
+    alert('Form submission started - check console for details');
+    
     setIsSubmitting(true);
     setErrors({});
+
+    console.log('Form submission started', { title, content, excerpt, featuredImage, published, categoryId, tagIds });
 
     // Validate form
     const formData = { title, content, excerpt, featuredImage };
@@ -48,6 +54,8 @@ export default function NewPostPage() {
     });
 
     if (!validation.isValid) {
+      console.log('Validation failed:', validation.errors);
+      alert('Validation failed: ' + validation.errors.join(', '));
       const fieldErrors: Record<string, string[]> = {};
       validation.errors.forEach(error => {
         const [field, message] = error.split(': ');
@@ -60,30 +68,45 @@ export default function NewPostPage() {
     }
 
     try {
+      const requestBody = {
+        title,
+        content,
+        excerpt,
+        featuredImage,
+        published,
+        categoryId,
+        tagIds,
+      };
+      
+      console.log('Sending request to /api/posts:', requestBody);
+      alert('Sending request to API...');
+      
       const response = await fetch('/api/posts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title,
-          content,
-          excerpt,
-          featuredImage,
-          published,
-          categoryId,
-          tagIds,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (response.ok) {
+        const responseData = await response.json();
+        console.log('Success response:', responseData);
+        alert('Post created successfully!');
         showSuccess('Post created successfully!');
         router.push('/dashboard');
       } else {
         const data = await response.json();
+        console.error('Error response:', data);
+        alert('Error: ' + (data.error || 'Failed to create post'));
         showError(data.error || 'Failed to create post');
       }
-    } catch {
+    } catch (error) {
+      console.error('Network error:', error);
+      alert('Network error: ' + error);
       showError('An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
